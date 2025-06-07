@@ -1,0 +1,82 @@
+workflow:
+  name: "MCP and A2A Protocol Compliant Workflow"
+  description: "Demonstrates proper use of real MCP and A2A protocol specifications"
+  metadata:
+    version: "1.0"
+    category: "financial"
+    sensitivity: "high"
+    compliance_frameworks: ["PCI_DSS", "SOX", "GDPR"]
+    mcp_version: "2025-03-26"
+    
+  steps:
+    - id: "initialize_auth_agent"
+      agent: "AuthenticationAgent"
+      action: "authenticate_user"
+      params:
+        mcp_transport: "sse"
+        mcp_capabilities: ["tools", "resources"]
+        mcp_endpoint: "https://auth.company.com/mcp"
+        auth_method: "oauth2"
+        required_scopes: ["read:financial", "write:transactions"]
+      dependencies: []
+      
+    - id: "setup_a2a_communication"
+      agent: "APIAgent"
+      action: "configure_agent_communication"
+      params:
+        a2a_transport: "https"
+        a2a_capabilities: ["streaming", "pushNotifications"]
+        a2a_input_modes: ["text", "data"]
+        a2a_output_modes: ["text", "data"]
+        a2a_auth_scheme: "oauth2"
+        agent_card_url: "https://api.company.com/.well-known/agent.json"
+      dependencies: ["initialize_auth_agent"]
+      
+    - id: "fetch_customer_data"
+      agent: "DatabaseAgent"
+      action: "fetch_customer_records"
+      params:
+        mcp_transport: "stdio"
+        mcp_capabilities: ["resources", "tools"]
+        database_url: "https://db.company.com/customer-data"
+        query_type: "structured"
+        encryption: "TLS_1_3"
+        data_classification: "sensitive"
+      dependencies: ["setup_a2a_communication"]
+      
+    - id: "analyze_risk_patterns"
+      agent: "AnalyticsAgent"
+      action: "analyze_transaction_patterns"
+      params:
+        a2a_transport: "https"
+        a2a_capabilities: ["longRunningTasks", "streaming"]
+        a2a_input_modes: ["data"]
+        a2a_output_modes: ["data", "text"]
+        analysis_type: "anomaly_detection"
+        model_endpoint: "https://ml.company.com/risk-analysis"
+      dependencies: ["fetch_customer_data"]
+      
+    - id: "send_compliance_report"
+      agent: "ComplianceAgent"
+      action: "create_regulatory_report"
+      params:
+        mcp_transport: "sse"
+        mcp_capabilities: ["tools", "progress"]
+        report_format: "regulatory_standard"
+        compliance_frameworks: ["SOX", "PCI_DSS"]
+        encryption_required: true
+        audit_trail: true
+      dependencies: ["analyze_risk_patterns"]
+      
+    - id: "notify_stakeholders"
+      agent: "NotificationAgent"
+      action: "notify_compliance_team"
+      params:
+        a2a_transport: "https"
+        a2a_capabilities: ["pushNotifications"]
+        a2a_input_modes: ["text", "data"]
+        a2a_output_modes: ["text"]
+        a2a_auth_scheme: "bearer"
+        notification_channels: ["email", "slack", "dashboard"]
+        priority: "high"
+      dependencies: ["send_compliance_report"] 

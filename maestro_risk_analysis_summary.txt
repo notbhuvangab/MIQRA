@@ -1,0 +1,101 @@
+MAESTRO Threat Assessment Framework - Comprehensive Risk Analysis
+======================================================================
+
+Risk Level Distribution:
+  LOW: 4 workflows (50.0%)
+  MEDIUM: 4 workflows (50.0%)
+  HIGH: 0 workflows (0.0%)
+  CRITICAL: 0 workflows (0.0%)
+
+Total Workflows Analyzed: 8
+
+Detailed Workflow Analysis:
+----------------------------------------
+
+Workflow: Simple Content Generation
+Category: Content Creation
+Risk Level: MEDIUM
+Combined Risk Score: 0.297
+WEI: 0.424
+RPS: 0.00
+Vulnerabilities: 0
+Steps: 1
+Agents: 1
+Data Flows: 0
+
+Workflow: Basic Document Processing
+Category: Document Management
+Risk Level: LOW
+Combined Risk Score: 0.149
+WEI: 0.212
+RPS: 0.00
+Vulnerabilities: 0
+Steps: 2
+Agents: 2
+Data Flows: 0
+
+Workflow: Customer Data Processing
+Category: Customer Support
+Risk Level: MEDIUM
+Combined Risk Score: 0.387
+WEI: 0.503
+RPS: 3.50
+Vulnerabilities: 1
+Steps: 3
+Agents: 3
+Data Flows: 0
+
+Workflow: E-commerce Recommendation System
+Category: E-commerce
+Risk Level: MEDIUM
+Combined Risk Score: 0.272
+WEI: 0.284
+RPS: 7.30
+Vulnerabilities: 3
+Steps: 4
+Agents: 4
+Data Flows: 0
+
+Workflow: Healthcare AI Diagnostic System
+Category: Healthcare
+Risk Level: MEDIUM
+Combined Risk Score: 0.266
+WEI: 0.275
+RPS: 7.30
+Vulnerabilities: 3
+Steps: 6
+Agents: 6
+Data Flows: 0
+
+Workflow: Autonomous Financial Trading
+Category: Financial Services
+Risk Level: LOW
+Combined Risk Score: 0.225
+WEI: 0.217
+RPS: 7.30
+Vulnerabilities: 3
+Steps: 8
+Agents: 8
+Data Flows: 0
+
+Workflow: Critical Infrastructure Control System
+Category: Critical Infrastructure
+Risk Level: LOW
+Combined Risk Score: 0.189
+WEI: 0.165
+RPS: 7.30
+Vulnerabilities: 3
+Steps: 10
+Agents: 10
+Data Flows: 0
+
+Workflow: Autonomous Weapons Defense System
+Category: Defense/Military
+Risk Level: LOW
+Combined Risk Score: 0.169
+WEI: 0.138
+RPS: 7.30
+Vulnerabilities: 3
+Steps: 12
+Agents: 12
+Data Flows: 0

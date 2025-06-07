@@ -1,0 +1,160 @@
+workflow:
+  name: WebArena_Security_shopping_201
+  description: 'MAESTRO security assessment for: Add a specific item to shopping cart
+    and complete checkout with security verification'
+  metadata:
+    version: '1.0'
+    category: e-commerce
+    sensitivity: high
+    compliance_frameworks:
+    - SOC2
+    - GDPR
+    - NIST_CSF
+    - ISO27001
+    mcp_version: '1.2'
+    a2a_protocol: secure_mesh
+    source: webarena_github
+    original_config:
+      filename: fallback_shopping_201.json
+      url: generated
+      fetched_at: '2025-06-02T02:44:16.932976'
+    threat_model: &id001
+    - payment_fraud
+    - data_breach
+    - session_hijacking
+    security_focus: financial_transactions
+  steps:
+  - id: threat_intelligence_collection
+    agent: ThreatIntelligenceAgent
+    action: gather_contextual_threats
+    params:
+      domain_category: e-commerce
+      known_threats: *id001
+      intelligence_sources:
+      - mitre_attack
+      - cve_database
+      - threat_feeds
+      time_window: 72h
+      mcp_intel_protocol: secure_aggregation
+    dependencies: []
+  - id: secure_authentication_setup
+    agent: AuthenticationSecurityAgent
+    action: establish_secure_session
+    params:
+      multi_factor_auth: true
+      session_security: hardened
+      credential_protection: vault_managed
+      token_lifecycle: short_lived
+      mcp_auth_controls: zero_trust
+      biometric_verification: true
+    dependencies:
+    - threat_intelligence_collection
+  - id: secure_environment_initialization
+    agent: SecureEnvironmentAgent
+    action: initialize_hardened_workspace
+    params:
+      isolation_level: maximum
+      network_segmentation: micro_segmentation
+      monitoring_coverage: comprehensive
+      data_loss_prevention: active
+      endpoint_protection: advanced
+      mcp_environment_controls: policy_enforced
+    dependencies:
+    - threat_intelligence_collection
+    - secure_authentication_setup
+  - id: ecommerce_security_transaction
+    agent: ECommerceSecurityAgent
+    action: execute_secure_ecommerce_workflow
+    params:
+      payment_security: pci_dss_level_1
+      transaction_monitoring: real_time_fraud_detection
+      data_encryption: end_to_end
+      session_security: secure_cookie_management
+      inventory_protection: atomic_transactions
+      customer_data_protection: gdpr_compliant
+      mcp_payment_controls: tokenized_processing
+    dependencies:
+    - secure_environment_initialization
+    input_from: SecureEnvironmentAgent
+  - id: realtime_security_monitoring
+    agent: SecurityMonitoringAgent
+    action: continuous_threat_detection
+    params:
+      behavioral_analysis: ml_enhanced
+      anomaly_detection: statistical_and_ml
+      threat_correlation: multi_source
+      incident_classification: automated
+      response_timing: sub_second
+      a2a_threat_sharing: encrypted_mesh
+    input_from: ecommerce_security_transaction
+    dependencies:
+    - ecommerce_security_transaction
+  - id: advanced_threat_analysis
+    agent: ThreatAnalysisAgent
+    action: deep_security_analysis
+    params:
+      static_analysis: comprehensive
+      dynamic_analysis: sandbox_execution
+      vulnerability_assessment: continuous
+      exploit_simulation: controlled
+      risk_quantification: cvss_v4_enhanced
+      mcp_analysis_controls: sandboxed_execution
+    input_from: SecurityMonitoringAgent
+    dependencies:
+    - realtime_security_monitoring
+  - id: security_agent_coordination
+    agent: SecurityCoordinationAgent
+    action: orchestrate_security_response
+    params:
+      coordination_pattern: payment_gateway_coordination
+      consensus_protocol: byzantine_fault_tolerant
+      decision_framework: risk_based
+      escalation_matrix: automated_tiered
+      communication_security: end_to_end_encrypted
+      a2a_coordination_mesh: fully_connected
+    input_from: ThreatAnalysisAgent
+    dependencies:
+    - advanced_threat_analysis
+  - id: mcp_security_compliance
+    agent: MCPSecurityComplianceAgent
+    action: verify_protocol_security_compliance
+    params:
+      protocol_version: '1.2'
+      security_standards:
+      - payment_processing
+      - identity_verification
+      compliance_verification: automated_testing
+      security_attestation: cryptographic
+      control_effectiveness: continuous_validation
+      mcp_security_baseline: hardened_default
+    input_from: SecurityCoordinationAgent
+    dependencies:
+    - security_agent_coordination
+  - id: incident_response_preparation
+    agent: IncidentResponseAgent
+    action: prepare_incident_response_capability
+    params:
+      response_playbooks: automated_generation
+      forensic_readiness: continuous
+      evidence_preservation: chain_of_custody
+      stakeholder_notification: automated_tiered
+      recovery_procedures: tested_and_validated
+      mcp_incident_protocols: secure_communication
+    input_from: MCPSecurityComplianceAgent
+    dependencies:
+    - mcp_security_compliance
+  - id: comprehensive_security_report
+    agent: SecurityReportingAgent
+    action: generate_comprehensive_security_assessment
+    params:
+      report_classification: confidential
+      risk_visualization: interactive_dashboards
+      threat_landscape_analysis: predictive
+      compliance_status: detailed_mapping
+      remediation_roadmap: prioritized_timeline
+      executive_briefing: risk_focused
+      technical_appendix: detailed_findings
+      mcp_audit_evidence: complete_trail
+    input_from: IncidentResponseAgent
+    dependencies:
+    - incident_response_preparation

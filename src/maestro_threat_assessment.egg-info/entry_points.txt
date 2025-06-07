@@ -1,0 +1,2 @@
+[console_scripts]
+maestro = maestro_threat_assessment.cli.main:cli

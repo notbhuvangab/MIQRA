@@ -1,0 +1,89 @@
+workflow:
+  name: "Financial Data Analysis with High-Risk Operations"
+  description: "Comprehensive financial analysis workflow with critical security considerations"
+  metadata:
+    version: "1.0"
+    category: "financial"
+    sensitivity: "critical"
+    compliance_frameworks: ["SOX", "PCI_DSS", "GDPR"]
+    mcp_version: "2025-03-26"
+  
+  steps:
+    - id: "extract_financial_data"
+      agent: "DatabaseAgent"
+      action: "fetch_financial_records"
+      params:
+        mcp_transport: "sse"
+        mcp_capabilities: ["resources", "tools"]
+        mcp_endpoint: "https://finance-db.company.com/mcp"
+        data_sources: ["transaction_logs", "customer_records", "payment_data"]
+        include_pii: true
+        data_classification: "highly_sensitive"
+        access_controls: "enabled"
+        encryption: "required"
+      dependencies: []
+    
+    - id: "validate_data_integrity"
+      agent: "SecurityAgent"
+      action: "validate_financial_data"
+      params:
+        a2a_transport: "https"
+        a2a_capabilities: ["streaming", "longRunningTasks"]
+        a2a_input_modes: ["data"]
+        a2a_output_modes: ["data", "text"]
+        a2a_auth_scheme: "oauth2"
+        validation_rules: ["checksum", "schema_validation", "business_rules"]
+        threat_detection: "enabled"
+      dependencies: ["extract_financial_data"]
+    
+    - id: "execute_risk_analysis"
+      agent: "AnalyticsAgent"
+      action: "analyze_financial_risk"
+      params:
+        mcp_transport: "sse"
+        mcp_capabilities: ["tools", "progress", "cancellation"]
+        analysis_models: ["fraud_detection", "credit_risk", "market_risk"]
+        external_apis: ["credit_bureau", "market_data"]
+        model_poisoning_protection: "enabled"
+        output_validation: "strict"
+      dependencies: ["validate_data_integrity"]
+    
+    - id: "process_ml_predictions"
+      agent: "ModelAgent"
+      action: "process_risk_predictions"
+      params:
+        a2a_transport: "https"
+        a2a_capabilities: ["longRunningTasks", "pushNotifications"]
+        a2a_input_modes: ["data"]
+        a2a_output_modes: ["data"]
+        a2a_auth_scheme: "mutualTLS"
+        model_endpoints: ["risk_scoring", "anomaly_detection"]
+        supply_chain_validation: "required"
+        tool_poisoning_detection: "enabled"
+      dependencies: ["execute_risk_analysis"]
+    
+    - id: "generate_compliance_report"
+      agent: "ComplianceAgent"
+      action: "create_regulatory_report"
+      params:
+        mcp_transport: "stdio"
+        mcp_capabilities: ["tools", "resources", "logging"]
+        report_types: ["sox_compliance", "pci_audit", "gdpr_assessment"]
+        data_retention_policy: "7_years"
+        audit_trail: "complete"
+        compliance_violation_check: "enabled"
+      dependencies: ["process_ml_predictions"]
+    
+    - id: "execute_sensitive_operations"
+      agent: "WorkflowAgent"
+      action: "execute_critical_operations"
+      params:
+        a2a_transport: "https"
+        a2a_capabilities: ["streaming", "stateTransitionHistory"]
+        a2a_input_modes: ["data", "text"]
+        a2a_output_modes: ["data", "text"]
+        a2a_auth_scheme: "oauth2"
+        operations: ["data_masking", "anonymization", "secure_delete"]
+        approval_required: true
+        multi_factor_auth: "required"
+      dependencies: ["generate_compliance_report"] 
