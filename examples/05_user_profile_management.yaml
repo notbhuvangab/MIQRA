@@ -6,8 +6,6 @@ workflow:
     compliance: ["GDPR"]
 
   agents:
-
-  agents:
     - name: "UserProcessor"
       protocol: "MCP"
       tools: ["database_connector", "user_validator"]

@@ -114,10 +114,10 @@ MAESTRO_LAYER_DESCRIPTIONS = {
 # Core Threat Matrix from research - specific AC, Impact, VS, PC values
 CORE_THREAT_MATRIX = {
     # L1: Foundation Models
-    'model_extraction': {'ac': 2, 'impact': 3, 'vs': 6, 'pc': 2, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},
-    'prompt_injection': {'ac': 1, 'impact': 5, 'vs': 9, 'pc': 3, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},
-    'bias_amplification': {'ac': 1, 'impact': 5, 'vs': 9, 'pc': 3, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},  # Mapped to prompt injection
-    'model_poisoning': {'ac': 2, 'impact': 3, 'vs': 6, 'pc': 2, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},  # Mapped to model extraction
+    'model_extraction': {'ac': 2, 'impact': 3, 'vs': 6, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},
+    'prompt_injection': {'ac': 1, 'impact': 3, 'vs': 9,'layer': MAESTROLayer.L1_FOUNDATION_MODELS},
+    'bias_amplification': {'ac': 1, 'impact': 3, 'vs': 9,'layer': MAESTROLayer.L1_FOUNDATION_MODELS},  # Mapped to prompt injection
+    'model_poisoning': {'ac': 2, 'impact': 3, 'vs': 6, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},  # Mapped to model extraction
     
     # L2: Data Operations
     'data_poisoning': {'ac': 2, 'impact': 4, 'vs': 7, 'pc': 3, 'layer': MAESTROLayer.L2_DATA_OPERATIONS},

@@ -1,0 +1,8 @@
+# Virtual Environment
+venv/
+
+# Large files
+venv/lib/python3.12/site-packages/kaleido/executable/bin/kaleido
+
+examples/base.yaml
+generate_workflow_profiles.py
