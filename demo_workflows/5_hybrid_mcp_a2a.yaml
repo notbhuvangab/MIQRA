@@ -1,0 +1,52 @@
+
+workflow:
+  name: "HybridMCPA2A"
+  protocol: "HYBRID"
+  version: "1.0"
+  description: "Hybrid workflow combining MCP tools with A2A agents"
+  
+  mcp_agents:
+    - id: ToolAgent
+      type: MCPProcessor
+      permissions: user
+      tools:
+        - name: DataValidator
+          version: 1.0.0
+          sandbox: true
+          
+  a2a_agents:
+    - id: CommunicatorAgent
+      type: A2AMessenger
+      permissions: user
+      capabilities: ["message", "coordinate"]
+      
+    - id: StorageAgent
+      type: A2ADataStore
+      permissions: privileged
+      capabilities: ["store", "retrieve", "backup"]
+      
+  steps:
+    - step_id: "mcp_validate"
+      agent: ToolAgent
+      action: "validate_input"
+      protocol: "MCP"
+      
+    - step_id: "a2a_communicate"
+      agent: CommunicatorAgent
+      action: "send_message"
+      protocol: "A2A"
+      depends_on: ["mcp_validate"]
+      
+    - step_id: "a2a_store"
+      agent: StorageAgent
+      action: "persist_data"
+      protocol: "A2A"
+      depends_on: ["a2a_communicate"]
+      
+  interprotocol_bridge:
+    mcp_to_a2a: "message_adapter"
+    security: "protocol_gateway"
+    
+  security:
+    mixed_trust_model: true
+    protocol_isolation: false

@@ -16,7 +16,7 @@ from datetime import datetime
 
 from .workflow_parser import WorkflowParser, ParsedWorkflow
 from .risk_calculator import RiskCalculator, RiskAssessmentResult
-from .cost_estimator import CostEstimator, CostAssessmentResult
+
 from ..models.maestro_constants import MAESTROLayer, MAESTRO_LAYER_DESCRIPTIONS
 
 @dataclass
@@ -27,7 +27,6 @@ class MAESTROAssessmentReport:
     workflow: ParsedWorkflow
     vulnerabilities: List[Dict[str, Any]]
     risk_assessment: RiskAssessmentResult
-    cost_assessment: CostAssessmentResult
     executive_summary: Dict[str, Any]
     recommendations: List[str]
     metadata: Dict[str, Any]
@@ -38,20 +37,13 @@ class MAESTROEngine:
     def __init__(self):
         self.workflow_parser = WorkflowParser()
         self.risk_calculator = RiskCalculator()
-        self.cost_estimator = CostEstimator()
         
-    def assess_workflow_from_yaml(self, yaml_content: str, 
-                                 base_infrastructure_cost: Optional[float] = None,
-                                 enterprise_size: str = 'medium',
-                                 industry: str = 'technology') -> MAESTROAssessmentReport:
+    def assess_workflow_from_yaml(self, yaml_content: str) -> MAESTROAssessmentReport:
         """
         Perform complete MAESTRO assessment from YAML workflow definition
         
         Args:
             yaml_content: YAML workflow definition
-            base_infrastructure_cost: Base annual infrastructure cost
-            enterprise_size: Enterprise size category
-            industry: Industry type
             
         Returns:
             Complete MAESTRO assessment report
@@ -65,21 +57,13 @@ class MAESTROEngine:
         # Calculate risk assessment
         risk_assessment = self.risk_calculator.calculate_risk(workflow, vulnerabilities)
         
-        # Calculate cost assessment
-        cost_assessment = self.cost_estimator.estimate_costs(
-            risk_assessment, 
-            base_infrastructure_cost, 
-            enterprise_size, 
-            industry
-        )
-        
         # Generate executive summary
         executive_summary = self._generate_executive_summary(
-            workflow, risk_assessment, cost_assessment
+            workflow, risk_assessment
         )
         
         # Combine recommendations
-        recommendations = self._combine_recommendations(risk_assessment, cost_assessment)
+        recommendations = self._combine_recommendations(risk_assessment)
         
         # Generate assessment ID
         assessment_id = f"MAESTRO-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -90,29 +74,20 @@ class MAESTROEngine:
             workflow=workflow,
             vulnerabilities=vulnerabilities,
             risk_assessment=risk_assessment,
-            cost_assessment=cost_assessment,
             executive_summary=executive_summary,
             recommendations=recommendations,
             metadata={
                 'maestro_version': '1.0.0',
-                'assessment_type': 'full',
-                'enterprise_size': enterprise_size,
-                'industry': industry
+                'assessment_type': 'full'
             }
         )
     
-    def assess_workflow_from_file(self, filepath: str,
-                                 base_infrastructure_cost: Optional[float] = None,
-                                 enterprise_size: str = 'medium',
-                                 industry: str = 'technology') -> MAESTROAssessmentReport:
+    def assess_workflow_from_file(self, filepath: str) -> MAESTROAssessmentReport:
         """
         Perform complete MAESTRO assessment from YAML file
         
         Args:
             filepath: Path to YAML workflow file
-            base_infrastructure_cost: Base annual infrastructure cost
-            enterprise_size: Enterprise size category
-            industry: Industry type
             
         Returns:
             Complete MAESTRO assessment report
@@ -124,9 +99,7 @@ class MAESTROEngine:
         with open(filepath, 'r', encoding='utf-8') as file:
             yaml_content = file.read()
             
-        return self.assess_workflow_from_yaml(
-            yaml_content, base_infrastructure_cost, enterprise_size, industry
-        )
+        return self.assess_workflow_from_yaml(yaml_content)
     
     def quick_assessment(self, yaml_content: str) -> Dict[str, Any]:
         """
@@ -151,8 +124,24 @@ class MAESTROEngine:
         return {
             'workflow_name': workflow.name,
             'risk_level': risk_assessment.risk_level,
-            'total_wei': round(risk_assessment.total_wei, 2),
-            'total_rps': round(risk_assessment.total_rps, 2),
+            'total_wei': round(risk_assessment.total_wei.mean, 2),
+            'total_wei_uncertainty': {
+                'mean': round(risk_assessment.total_wei.mean, 2),
+                'std_dev': round(risk_assessment.total_wei.std_dev, 2),
+                'confidence_interval': (
+                    round(risk_assessment.total_wei.confidence_interval[0], 2),
+                    round(risk_assessment.total_wei.confidence_interval[1], 2)
+                )
+            },
+            'total_rps': round(risk_assessment.total_rps.mean, 2),
+            'total_rps_uncertainty': {
+                'mean': round(risk_assessment.total_rps.mean, 2),
+                'std_dev': round(risk_assessment.total_rps.std_dev, 2),
+                'confidence_interval': (
+                    round(risk_assessment.total_rps.confidence_interval[0], 2),
+                    round(risk_assessment.total_rps.confidence_interval[1], 2)
+                )
+            },
             'vulnerability_count': len(vulnerabilities),
             'agents_count': len(workflow.agents),
             'steps_count': len(workflow.steps),
@@ -161,8 +150,7 @@ class MAESTROEngine:
         }
     
     def _generate_executive_summary(self, workflow: ParsedWorkflow, 
-                                   risk_assessment: RiskAssessmentResult,
-                                   cost_assessment: CostAssessmentResult) -> Dict[str, Any]:
+                                   risk_assessment: RiskAssessmentResult) -> Dict[str, Any]:
         """Generate executive summary for the assessment"""
         
         # Calculate key metrics
@@ -181,9 +169,6 @@ class MAESTROEngine:
             key=lambda x: x[1], reverse=True
         )[:3]
         
-        # Calculate security investment percentage
-        security_investment_percentage = cost_assessment.cost_increase_percentage
-        
         return {
             'workflow_overview': {
                 'name': workflow.name,
@@ -194,26 +179,29 @@ class MAESTROEngine:
             },
             'risk_summary': {
                 'overall_risk_level': risk_assessment.risk_level,
-                'wei_score': round(risk_assessment.total_wei, 2),
-                'rps_score': round(risk_assessment.total_rps, 2),
+                'wei_score': round(risk_assessment.total_wei.mean, 2),
+                'wei_uncertainty': {
+                    'mean': round(risk_assessment.total_wei.mean, 2),
+                    'std_dev': round(risk_assessment.total_wei.std_dev, 2),
+                    'confidence_interval': risk_assessment.total_wei.confidence_interval
+                },
+                'rps_score': round(risk_assessment.total_rps.mean, 2),
+                'rps_uncertainty': {
+                    'mean': round(risk_assessment.total_rps.mean, 2),
+                    'std_dev': round(risk_assessment.total_rps.std_dev, 2),
+                    'confidence_interval': risk_assessment.total_rps.confidence_interval
+                },
                 'total_vulnerabilities': total_vulnerabilities,
                 'critical_vulnerabilities': critical_vulnerabilities,
                 'high_vulnerabilities': high_vulnerabilities
             },
-            'cost_summary': {
-                'base_cost': cost_assessment.base_infrastructure_cost,
-                'total_tco': cost_assessment.total_tco,
-                'security_investment': cost_assessment.total_tco - cost_assessment.base_infrastructure_cost,
-                'cost_increase_percentage': round(security_investment_percentage, 1),
-                'roi_percentage': round(cost_assessment.roi_analysis.get('roi_percentage', 0), 1),
-                'payback_months': round(cost_assessment.roi_analysis.get('payback_period_months', 0), 1)
-            },
+
             'key_findings': {
                 'most_vulnerable_layers': [
                     {'layer': layer.name, 'vulnerability_count': count} 
                     for layer, count in vulnerable_layers if count > 0
                 ],
-                'highest_cost_layers': self._get_highest_cost_layers(cost_assessment),
+
                 'critical_risks': self._get_critical_risks(risk_assessment)
             }
         }
@@ -238,22 +226,7 @@ class MAESTROEngine:
         
         return sorted_vulns[:5]
     
-    def _get_highest_cost_layers(self, cost_assessment: CostAssessmentResult) -> List[Dict[str, Any]]:
-        """Get the 3 highest cost layers"""
-        sorted_layers = sorted(
-            cost_assessment.layer_costs.items(),
-            key=lambda x: x[1].total_cost,
-            reverse=True
-        )
-        
-        return [
-            {
-                'layer': layer.name,
-                'cost': round(cost_breakdown.total_cost, 0),
-                'risk_multiplier': round(cost_breakdown.risk_multiplier, 2)
-            }
-            for layer, cost_breakdown in sorted_layers[:3]
-        ]
+
     
     def _get_critical_risks(self, risk_assessment: RiskAssessmentResult) -> List[str]:
         """Get critical risk indicators"""
@@ -262,11 +235,24 @@ class MAESTROEngine:
         if risk_assessment.risk_level in ['high', 'critical']:
             critical_risks.append(f"Overall risk level is {risk_assessment.risk_level}")
         
-        if risk_assessment.total_wei > 5.0:
-            critical_risks.append(f"High Workflow Exploitability Index: {risk_assessment.total_wei:.2f}")
+        # Handle Monte Carlo results for WEI and RPS
+        total_wei = risk_assessment.total_wei
+        if hasattr(total_wei, 'mean'):
+            wei_value = total_wei.mean
+        else:
+            wei_value = total_wei
+            
+        total_rps = risk_assessment.total_rps
+        if hasattr(total_rps, 'mean'):
+            rps_value = total_rps.mean
+        else:
+            rps_value = total_rps
         
-        if risk_assessment.total_rps > 50.0:
-            critical_risks.append(f"High Risk Propagation Score: {risk_assessment.total_rps:.2f}")
+        if wei_value > 5.0:
+            critical_risks.append(f"High Workflow Exploitability Index: {wei_value:.2f}")
+        
+        if rps_value > 50.0:
+            critical_risks.append(f"High Risk Propagation Score: {rps_value:.2f}")
         
         # Check for critical vulnerabilities by layer
         for layer, vulns in risk_assessment.vulnerabilities_by_layer.items():
@@ -278,17 +264,13 @@ class MAESTROEngine:
         
         return critical_risks[:5]
     
-    def _combine_recommendations(self, risk_assessment: RiskAssessmentResult,
-                               cost_assessment: CostAssessmentResult) -> List[str]:
-        """Combine and prioritize recommendations from risk and cost assessments"""
+    def _combine_recommendations(self, risk_assessment: RiskAssessmentResult) -> List[str]:
+        """Combine and prioritize recommendations from risk assessment"""
         
         combined_recommendations = []
         
         # Add top risk recommendations
-        combined_recommendations.extend(risk_assessment.recommendations[:5])
-        
-        # Add top cost optimization recommendations
-        combined_recommendations.extend(cost_assessment.cost_optimization_recommendations[:3])
+        combined_recommendations.extend(risk_assessment.recommendations[:8])
         
         # Add MAESTRO framework-specific recommendations
         maestro_recommendations = [
@@ -327,19 +309,22 @@ class MAESTROEngine:
             'vulnerabilities': report.vulnerabilities,
             'risk_assessment': {
                 'risk_level': report.risk_assessment.risk_level,
-                'total_wei': report.risk_assessment.total_wei,
-                'total_rps': report.risk_assessment.total_rps,
+                'total_wei': {
+                    'mean': report.risk_assessment.total_wei.mean,
+                    'std_dev': report.risk_assessment.total_wei.std_dev,
+                    'confidence_interval': report.risk_assessment.total_wei.confidence_interval
+                } if hasattr(report.risk_assessment.total_wei, 'mean') else report.risk_assessment.total_wei,
+                'total_rps': {
+                    'mean': report.risk_assessment.total_rps.mean,
+                    'std_dev': report.risk_assessment.total_rps.std_dev,
+                    'confidence_interval': report.risk_assessment.total_rps.confidence_interval
+                } if hasattr(report.risk_assessment.total_rps, 'mean') else report.risk_assessment.total_rps,
                 'layer_vulnerabilities': {
                     layer.name: len(vulns) 
                     for layer, vulns in report.risk_assessment.vulnerabilities_by_layer.items()
                 }
             },
-            'cost_assessment': {
-                'base_cost': report.cost_assessment.base_infrastructure_cost,
-                'total_tco': report.cost_assessment.total_tco,
-                'cost_increase_percentage': report.cost_assessment.cost_increase_percentage,
-                'roi_analysis': report.cost_assessment.roi_analysis
-            },
+
             'executive_summary': report.executive_summary,
             'recommendations': report.recommendations,
             'metadata': report.metadata
@@ -347,22 +332,14 @@ class MAESTROEngine:
         
         return json.dumps(report_dict, indent=2, default=str)
 
-    def assess_workflow(self, yaml_content: str, 
-                       base_infrastructure_cost: Optional[float] = None,
-                       enterprise_size: str = 'medium',
-                       industry: str = 'technology') -> MAESTROAssessmentReport:
+    def assess_workflow(self, yaml_content: str) -> MAESTROAssessmentReport:
         """
         Alias for assess_workflow_from_yaml for convenience
         
         Args:
             yaml_content: YAML workflow definition
-            base_infrastructure_cost: Base annual infrastructure cost
-            enterprise_size: Enterprise size category
-            industry: Industry type
             
         Returns:
             Complete MAESTRO assessment report
         """
-        return self.assess_workflow_from_yaml(
-            yaml_content, base_infrastructure_cost, enterprise_size, industry
-        ) 
+        return self.assess_workflow_from_yaml(yaml_content) 

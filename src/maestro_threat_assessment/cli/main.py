@@ -36,13 +36,9 @@ def cli():
 @click.option('--output', '-o', type=click.Path(), help='Output file for the report')
 @click.option('--format', '-f', type=click.Choice(['json', 'table', 'summary']), 
               default='summary', help='Output format')
-@click.option('--enterprise-size', type=click.Choice(['startup', 'small', 'medium', 'large', 'enterprise']),
-              default='medium', help='Enterprise size for cost estimation')
-@click.option('--industry', type=click.Choice(['financial', 'healthcare', 'government', 'technology', 'retail', 'manufacturing']),
-              default='technology', help='Industry type for cost modifiers')
-@click.option('--base-cost', type=float, help='Base annual infrastructure cost in USD')
+
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def assess(workflow_file, output, format, enterprise_size, industry, base_cost, verbose):
+def assess(workflow_file, output, format, verbose):
     """Perform complete MAESTRO threat assessment on a workflow file."""
     
     try:
@@ -55,9 +51,7 @@ def assess(workflow_file, output, format, enterprise_size, industry, base_cost, 
             click.echo(f"{Fore.BLUE}Analyzing workflow: {workflow_file}{Style.RESET_ALL}")
         
         # Perform assessment
-        report = engine.assess_workflow_from_file(
-            workflow_file, base_cost, enterprise_size, industry
-        )
+        report = engine.assess_workflow_from_file(workflow_file)
         
         if verbose:
             click.echo(f"{Fore.GREEN}Assessment completed: {report.assessment_id}{Style.RESET_ALL}")
@@ -110,11 +104,7 @@ def quick(workflow_file, format):
 
 @cli.command()
 @click.argument('workflow_content', type=str)
-@click.option('--enterprise-size', type=click.Choice(['startup', 'small', 'medium', 'large', 'enterprise']),
-              default='medium', help='Enterprise size')
-@click.option('--industry', type=click.Choice(['financial', 'healthcare', 'government', 'technology', 'retail', 'manufacturing']),
-              default='technology', help='Industry type')
-def analyze_yaml(workflow_content, enterprise_size, industry):
+def analyze_yaml(workflow_content):
     """Analyze YAML workflow content directly (for testing/demo)."""
     
     try:
@@ -143,37 +133,7 @@ def layers():
     click.echo("=" * 50)
     click.echo(tabulate(layer_data, headers=headers, tablefmt="grid"))
 
-@cli.command()
-@click.option('--enterprise-size', type=click.Choice(['startup', 'small', 'medium', 'large', 'enterprise']),
-              default='medium', help='Enterprise size')
-@click.option('--industry', type=click.Choice(['financial', 'healthcare', 'government', 'technology', 'retail', 'manufacturing']),
-              default='technology', help='Industry type')
-def cost_estimate(enterprise_size, industry):
-    """Display base cost estimation for different enterprise configurations."""
-    
-    from ..core.cost_estimator import CostEstimator
-    
-    estimator = CostEstimator()
-    base_cost = estimator._calculate_default_base_cost(enterprise_size, industry)
-    
-    click.echo(f"\n{Fore.CYAN}Base Infrastructure Cost Estimation{Style.RESET_ALL}")
-    click.echo("=" * 40)
-    click.echo(f"Enterprise Size: {enterprise_size.title()}")
-    click.echo(f"Industry: {industry.title()}")
-    click.echo(f"Estimated Annual Base Cost: ${base_cost:,.2f}")
-    
-    # Show breakdown
-    cost_breakdown = [
-        ["Compute Resources", "$50,000"],
-        ["Storage", "$20,000"],
-        ["Networking", "$15,000"],
-        ["Security Baseline", "$30,000"],
-        ["Monitoring", "$25,000"],
-        ["Compliance", "$35,000"]
-    ]
-    
-    click.echo(f"\n{Fore.YELLOW}Base Cost Components:{Style.RESET_ALL}")
-    click.echo(tabulate(cost_breakdown, headers=["Component", "Base Cost"], tablefmt="simple"))
+
 
 def _format_summary_report(report) -> str:
     """Format assessment report as human-readable summary."""
@@ -221,16 +181,7 @@ def _format_summary_report(report) -> str:
     output.append(f"Critical Vulnerabilities: {risk_summary['critical_vulnerabilities']}")
     output.append("")
     
-    # Cost Summary
-    cost_summary = summary['cost_summary']
-    output.append(f"{Fore.YELLOW}COST IMPACT{Style.RESET_ALL}")
-    output.append("-" * 20)
-    output.append(f"Base Infrastructure Cost: ${cost_summary['base_cost']:,.0f}")
-    output.append(f"Total TCO: ${cost_summary['total_tco']:,.0f}")
-    output.append(f"Security Investment: ${cost_summary['security_investment']:,.0f}")
-    output.append(f"Cost Increase: {cost_summary['cost_increase_percentage']:.1f}%")
-    output.append(f"ROI: {cost_summary['roi_percentage']:.1f}%")
-    output.append("")
+
     
     # Key Findings
     output.append(f"{Fore.YELLOW}KEY FINDINGS{Style.RESET_ALL}")
@@ -286,23 +237,7 @@ def _format_table_report(report) -> str:
         tablefmt="grid"
     ))
     
-    # Cost Breakdown Table
-    cost_data = []
-    for layer, cost_breakdown in report.cost_assessment.layer_costs.items():
-        cost_data.append([
-            layer.name.replace('_', ' ').title(),
-            f"${cost_breakdown.base_cost:,.0f}",
-            f"{cost_breakdown.risk_multiplier:.2f}x",
-            f"${cost_breakdown.total_cost:,.0f}"
-        ])
-    
-    output.append("\n\nCost Impact by Layer")
-    output.append("=" * 25)
-    output.append(tabulate(
-        cost_data,
-        headers=["Layer", "Base Cost", "Risk Multiplier", "Total Cost"],
-        tablefmt="grid"
-    ))
+
     
     return "\n".join(output)
 

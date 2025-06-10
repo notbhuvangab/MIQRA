@@ -1,0 +1,35 @@
+workflow:
+  name: "Customer Support System"
+  description: "Handle customer inquiries and support tickets"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "TicketProcessor"
+      protocol: "MCP"
+      tools: ["nlp_analyzer", "ticket_system"]
+    
+    - name: "ResponseGenerator"
+      protocol: "MCP" 
+      tools: ["template_engine"]
+    
+    - name: "SupportCoordinator"
+      protocol: "A2A"
+      communicates_with: ["TicketProcessor", "ResponseGenerator"]
+
+  steps:
+    - agent: "TicketProcessor"
+      action: "process_customer_inquiry"
+      protocol: "MCP"
+      
+    - agent: "TicketProcessor"
+      action: "analyze"
+      protocol: "MCP"
+      
+    - agent: "ResponseGenerator"
+      action: "generate"
+      protocol: "MCP"
+      
+    - agent: "SupportCoordinator"
+      action: "coordinate_response"
+      protocol: "A2A" 

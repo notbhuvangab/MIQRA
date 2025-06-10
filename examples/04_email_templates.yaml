@@ -1,0 +1,19 @@
+workflow:
+  name: "Email Template Builder"
+  description: "Create basic email templates"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "EmailBuilder"
+      protocol: "MCP"
+      tools: ["template_engine"]
+
+  steps:
+    - agent: "EmailBuilder"
+      action: "create_template"
+      protocol: "MCP"
+      
+    - agent: "EmailBuilder"
+      action: "validate_format"
+      protocol: "MCP" 

@@ -1,0 +1,19 @@
+workflow:
+  name: "File Copy Service"
+  description: "Copy files between directories"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "FileCopier"
+      protocol: "MCP"
+      tools: ["file_system"]
+
+  steps:
+    - agent: "FileCopier"
+      action: "list_files"
+      protocol: "MCP"
+      
+    - agent: "FileCopier"
+      action: "copy_file"
+      protocol: "MCP" 

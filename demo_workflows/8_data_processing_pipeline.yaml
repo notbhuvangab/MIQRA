@@ -1,0 +1,52 @@
+
+workflow:
+  name: "DataProcessingPipeline"
+  protocol: "A2A"
+  version: "1.0"
+  description: "Distributed data processing and analytics pipeline"
+  
+  agents:
+    - id: IngestionAgent
+      type: DataIngester
+      permissions: user
+      capabilities: ["extract", "validate", "transform"]
+      
+    - id: ProcessingAgent
+      type: DataProcessor
+      permissions: user
+      capabilities: ["analyze", "aggregate", "compute"]
+      
+    - id: StorageAgent
+      type: DataWarehouse
+      permissions: privileged
+      capabilities: ["store", "index", "backup"]
+      
+  steps:
+    - step_id: "ingest_raw_data"
+      agent: IngestionAgent
+      action: "extract_from_sources"
+      params:
+        sources: ["database", "api", "files"]
+        
+    - step_id: "transform_data"
+      agent: IngestionAgent
+      action: "clean_and_transform"
+      depends_on: ["ingest_raw_data"]
+      
+    - step_id: "process_analytics"
+      agent: ProcessingAgent
+      action: "run_analytics"
+      depends_on: ["transform_data"]
+      
+    - step_id: "store_results"
+      agent: StorageAgent
+      action: "persist_processed_data"
+      depends_on: ["process_analytics"]
+      
+  communication:
+    protocol: "message_queue"
+    encryption: "tls"
+    
+  security:
+    data_classification: "confidential"
+    access_control: "attribute_based"

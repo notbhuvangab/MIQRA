@@ -1,0 +1,44 @@
+workflow:
+  name: "HR Recruitment Automation"
+  description: "Automated candidate screening and interview scheduling"
+  metadata:
+    version: "1.0"
+    domain: "human_resources"
+
+  agents:
+    - name: "ResumeParserAgent"
+      protocol: "MCP"
+      tools: ["nlp_processor", "document_analyzer"]
+    
+    - name: "CandidateScreeningAgent"
+      protocol: "MCP"
+      tools: ["scoring_engine", "qualification_matcher"]
+    
+    - name: "InterviewSchedulerAgent"
+      protocol: "MCP"
+      tools: ["calendar_system", "notification_service"]
+    
+    - name: "HRCoordinator"
+      protocol: "A2A"
+      communicates_with: ["ResumeParserAgent", "CandidateScreeningAgent", "InterviewSchedulerAgent"]
+
+  steps:
+    - agent: "ResumeParserAgent"
+      action: "parse_resume_content"
+      protocol: "MCP"
+      
+    - agent: "ResumeParserAgent"
+      action: "extract_candidate_skills"
+      protocol: "MCP"
+      
+    - agent: "CandidateScreeningAgent"
+      action: "score_candidate_fit"
+      protocol: "MCP"
+      
+    - agent: "InterviewSchedulerAgent"
+      action: "schedule_interviews"
+      protocol: "MCP"
+      
+    - agent: "HRCoordinator"
+      action: "coordinate_hiring_process"
+      protocol: "A2A"

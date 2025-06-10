@@ -1,0 +1,41 @@
+workflow:
+  name: "Critical Infrastructure Management"
+  description: "Manage critical system infrastructure and operations"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "InfrastructureAgent"
+      protocol: "MCP"
+      tools: ["system_controller", "network_manager"]
+    
+    - name: "MonitoringAgent"
+      protocol: "MCP"
+      tools: ["performance_monitor", "alert_system"]
+    
+    - name: "AdminAgent"
+      protocol: "MCP"
+      tools: ["privilege_manager"]
+    
+    - name: "WorkflowAgent"
+      protocol: "A2A"
+      communicates_with: ["InfrastructureAgent", "MonitoringAgent", "AdminAgent"]
+
+  steps:
+    - agent: "InfrastructureAgent"
+      action: "execute_critical_operations"
+      protocol: "MCP"
+      
+    - agent: "MonitoringAgent"
+      action: "execute"
+      protocol: "MCP"
+      
+    - agent: "AdminAgent"
+      action: "execute_critical"
+      protocol: "MCP"
+      params:
+        privileges: ["administrator"]
+      
+    - agent: "WorkflowAgent"
+      action: "coordinate_infrastructure"
+      protocol: "A2A" 

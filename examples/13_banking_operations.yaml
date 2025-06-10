@@ -1,0 +1,64 @@
+workflow:
+  name: "Core Banking Operations"
+  description: "Critical banking system with payment processing and account management"
+  metadata:
+    version: "1.0"
+    compliance: ["SOX", "PCI_DSS", "GDPR"]
+
+  agents:
+
+  agents:
+    - name: "BankingAgent"
+      protocol: "MCP"
+      tools: ["core_banking_system", "payment_processor"]
+    
+    - name: "AccountManager"
+      protocol: "MCP"
+      tools: ["account_database", "transaction_processor"]
+    
+    - name: "SecurityAgent"
+      protocol: "MCP"
+      tools: ["fraud_detector", "ml_predictor"]
+    
+    - name: "ComplianceAgent"
+      protocol: "MCP"
+      tools: ["audit_system", "regulatory_reporter"]
+    
+    - name: "SystemCoordinator"
+      protocol: "A2A"
+      communicates_with: ["BankingAgent", "AccountManager", "SecurityAgent", "ComplianceAgent"]
+
+  steps:
+    - agent: "BankingAgent"
+      action: "process_financial_records"
+      protocol: "MCP"
+      params:
+        access_level: "privileged"
+        password: "admin123"
+      
+    - agent: "AccountManager"
+      action: "fetch_customer_records"
+      protocol: "MCP"
+      params:
+        include_pii: true
+        social_security: true
+      
+    - agent: "SecurityAgent"
+      action: "analyze_financial_risk"
+      protocol: "MCP"
+      
+    - agent: "SecurityAgent"
+      action: "process"
+      protocol: "MCP"
+      params:
+        model: "fraud_detection_v1"
+      
+    - agent: "ComplianceAgent"
+      action: "execute"
+      protocol: "MCP"
+      params:
+        audit_level: "critical_operations"
+      
+    - agent: "SystemCoordinator"
+      action: "coordinate_banking_operations"
+      protocol: "A2A" 

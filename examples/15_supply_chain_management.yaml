@@ -1,0 +1,44 @@
+workflow:
+  name: "Supply Chain Management Platform"
+  description: "End-to-end supply chain visibility and optimization"
+  metadata:
+    version: "1.0"
+    domain: "supply_chain"
+
+  agents:
+    - name: "ProcurementAgent"
+      protocol: "MCP"
+      tools: ["supplier_database", "contract_manager"]
+    
+    - name: "LogisticsAgent"
+      protocol: "MCP"
+      tools: ["shipping_tracker", "route_optimizer"]
+    
+    - name: "QualityAssuranceAgent"
+      protocol: "MCP"
+      tools: ["quality_scanner", "compliance_checker"]
+    
+    - name: "SupplyChainCoordinator"
+      protocol: "A2A"
+      communicates_with: ["ProcurementAgent", "LogisticsAgent", "QualityAssuranceAgent"]
+
+  steps:
+    - agent: "ProcurementAgent"
+      action: "manage_supplier_relationships"
+      protocol: "MCP"
+      
+    - agent: "LogisticsAgent"
+      action: "track_shipments"
+      protocol: "MCP"
+      
+    - agent: "LogisticsAgent"
+      action: "optimize_delivery_routes"
+      protocol: "MCP"
+      
+    - agent: "QualityAssuranceAgent"
+      action: "verify_product_quality"
+      protocol: "MCP"
+      
+    - agent: "SupplyChainCoordinator"
+      action: "coordinate_supply_chain"
+      protocol: "A2A" 

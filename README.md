@@ -4,13 +4,14 @@ A comprehensive security risk assessment tool for agentic workflows using the MA
 
 ## Overview
 
-The MAESTRO Threat Assessment Framework provides enterprise-grade security analysis for AI agentic workflows. It implements the latest MAESTRO security framework with enhanced risk quantification formulas, including:
+The MAESTRO Threat Assessment Framework provides enterprise-grade security analysis for AI agentic workflows. It implements the latest MAESTRO security framework with enhanced risk quantification formulas and Monte Carlo uncertainty estimation, including:
 
-- **Workflow Exploitability Index (WEI)** - MAESTRO-layered vulnerability assessment
-- **Risk Propagation Score (RPS)** - Cross-layer risk analysis
+- **Workflow Exploitability Index (WEI)** - MAESTRO-layered vulnerability assessment with statistical confidence intervals
+- **Risk Propagation Score (RPS)** - Cross-layer risk analysis with uncertainty quantification
+- **Monte Carlo Risk Assessment** - Probabilistic analysis with 10,000 simulation runs for robust uncertainty estimation
 - **Total Cost of Ownership (TCO)** - Enterprise cost impact evaluation
-- **Comprehensive Reporting** - Executive summaries and detailed technical reports
-- **Interactive Web GUI** - Modern web interface with flowchart visualization
+- **Comprehensive Reporting** - Executive summaries and detailed technical reports with confidence intervals
+- **Interactive Web GUI** - Modern web interface with flowchart visualization and uncertainty displays
 
 ## Features
 
@@ -18,10 +19,27 @@ The MAESTRO Threat Assessment Framework provides enterprise-grade security analy
 
 - **YAML Workflow Parsing**: Parse and analyze workflow definitions with agent interactions and data flows
 - **Vulnerability Identification**: Automatic detection of security risks across all MAESTRO layers
-- **Risk Quantification**: Calculate WEI and RPS scores using CSA 2025 threat statistics
+- **Monte Carlo Risk Quantification**: Calculate WEI and RPS scores with statistical uncertainty using 10,000 simulation runs
+- **Uncertainty Analysis**: 95% confidence intervals for all risk metrics with robust statistical foundation
 - **Cost Assessment**: Enterprise cost estimation with ROI analysis
-- **Multiple Output Formats**: CLI, JSON, tables, and executive summaries
-- **Interactive Web GUI**: Modern Streamlit-based interface with interactive visualizations
+- **Multiple Output Formats**: CLI, JSON, tables, and executive summaries with uncertainty bounds
+- **Interactive Web GUI**: Modern Streamlit-based interface with uncertainty visualization
+
+### 🎲 Monte Carlo Risk Assessment
+
+The framework implements probabilistic risk assessment using Monte Carlo simulation to quantify uncertainty in:
+
+- **Attack Complexity**: Distribution-based estimates of exploitation difficulty
+- **Business Impact**: Probabilistic assessment of potential damage
+- **Vulnerability Severity**: CVSS-like scoring with confidence intervals  
+- **Protocol Coupling**: Inter-component dependency risk estimation
+- **Layer Exposure**: MAESTRO layer-specific risk exposure with uncertainty
+
+Each assessment runs 10,000 Monte Carlo simulations to provide:
+- Mean risk scores with standard deviations
+- 95% confidence intervals for all metrics
+- Percentile distributions (5th, 25th, 50th, 75th, 95th)
+- Robust statistical foundation for enterprise decision-making
 
 ### 🌐 Web GUI Features
 
@@ -148,9 +166,11 @@ report = engine.assess_workflow_from_file(
     industry='financial'
 )
 
-# Access results
+# Access results with uncertainty
 print(f"Risk Level: {report.risk_assessment.risk_level}")
-print(f"WEI Score: {report.risk_assessment.total_wei}")
+print(f"WEI Score: {report.risk_assessment.total_wei.mean:.3f} ± {report.risk_assessment.total_wei.std_dev:.3f}")
+print(f"WEI 95% CI: [{report.risk_assessment.total_wei.confidence_interval[0]:.3f}, {report.risk_assessment.total_wei.confidence_interval[1]:.3f}]")
+print(f"RPS Score: {report.risk_assessment.total_rps.mean:.3f} ± {report.risk_assessment.total_rps.std_dev:.3f}")
 print(f"TCO: ${report.cost_assessment.total_tco:,.0f}")
 ```
 

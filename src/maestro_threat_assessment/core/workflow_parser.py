@@ -246,16 +246,25 @@ class WorkflowParser:
                 'description': 'Model processing may be vulnerable to poisoning attacks'
             })
         
-        # Check for data leakage risks (Data Operations L2)
-        sensitive_actions = ['fetch', 'extract', 'retrieve', 'download', 'fetch_financial_records', 'fetch_customer_records']
-        if (any(action in step.action.lower() for action in sensitive_actions) or
-            'DatabaseAgent' in step.agent):
+        # Check for data leakage risks (Data Operations L2) - be more specific
+        high_risk_data = ['financial_records', 'payment_data', 'sensitive_customer_data', 'classified']
+        medium_risk_data = ['customer_data', 'user_profiles', 'analytics_data']
+        
+        if any(pattern in step.action.lower() for pattern in high_risk_data):
             vulnerabilities.append({
                 'type': 'data_leakage',
                 'step': step.step_id,
                 'agent': step.agent,
                 'severity': 'high',
-                'description': 'Data extraction step may expose sensitive information'
+                'description': 'High-sensitivity data processing poses leakage risks'
+            })
+        elif any(pattern in step.action.lower() for pattern in medium_risk_data):
+            vulnerabilities.append({
+                'type': 'data_leakage',
+                'step': step.step_id,
+                'agent': step.agent,
+                'severity': 'medium',
+                'description': 'Customer data processing requires proper controls'
             })
         
         # Check for privacy violations (Data Operations L2)
@@ -316,28 +325,38 @@ class WorkflowParser:
         """Analyze workflow-level vulnerabilities"""
         vulnerabilities = []
         
-        # Check for monitoring evasion (Observability L5)
-        if (len(workflow.steps) > 3 and 
+        # Check for monitoring evasion (Observability L5) - only for complex workflows
+        if (len(workflow.steps) > 7 and 
             not any('monitor' in step.action.lower() for step in workflow.steps)):
             vulnerabilities.append({
                 'type': 'monitoring_evasion',
                 'step': 'workflow',
                 'agent': 'system',
-                'severity': 'medium',
-                'description': 'Workflow lacks adequate monitoring capabilities'
+                'severity': 'low',
+                'description': 'Complex workflow could benefit from monitoring capabilities'
             })
         
-        # Check for compliance violations (Compliance L6)
-        financial_keywords = ['financial', 'payment', 'transaction', 'money', 'customer', 'pii']
+        # Check for compliance violations (Compliance L6) - be more realistic
+        high_compliance_keywords = ['payment_processing', 'credit_card', 'bank_transfer', 'financial_transaction']
+        medium_compliance_keywords = ['customer_data', 'user_profiles', 'analytics']
         compliance_frameworks = workflow.metadata.get('compliance_frameworks', [])
-        if (any(keyword in workflow.name.lower() for keyword in financial_keywords) or
-            any(framework in ['SOX', 'PCI_DSS', 'GDPR'] for framework in compliance_frameworks)):
+        
+        if any(keyword in workflow.name.lower() for keyword in high_compliance_keywords):
             vulnerabilities.append({
                 'type': 'compliance_violation',
                 'step': 'workflow',
                 'agent': 'system',
                 'severity': 'high',
-                'description': 'Financial workflow may violate regulatory compliance requirements'
+                'description': 'Payment/financial processing requires strict compliance controls'
+            })
+        elif (any(keyword in workflow.name.lower() for keyword in medium_compliance_keywords) and
+              any(framework in ['SOX', 'PCI_DSS', 'GDPR'] for framework in compliance_frameworks)):
+            vulnerabilities.append({
+                'type': 'compliance_violation',
+                'step': 'workflow',
+                'agent': 'system',
+                'severity': 'medium',
+                'description': 'Data processing workflow should follow compliance guidelines'
             })
         
         # Check for supply chain attacks (Ecosystem L7)

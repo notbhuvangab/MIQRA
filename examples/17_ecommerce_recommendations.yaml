@@ -1,0 +1,44 @@
+workflow:
+  name: "E-commerce Recommendation Engine"
+  description: "Personalized product recommendations using customer behavior analysis"
+  metadata:
+    version: "1.0"
+    domain: "e-commerce"
+
+  agents:
+    - name: "CustomerBehaviorAgent"
+      protocol: "MCP"
+      tools: ["analytics_engine", "behavior_tracker"]
+    
+    - name: "ProductCatalogAgent"
+      protocol: "MCP"
+      tools: ["catalog_database", "inventory_system"]
+    
+    - name: "RecommendationModelAgent"
+      protocol: "MCP"
+      tools: ["ml_predictor", "recommendation_engine"]
+    
+    - name: "PersonalizationCoordinator"
+      protocol: "A2A"
+      communicates_with: ["CustomerBehaviorAgent", "ProductCatalogAgent", "RecommendationModelAgent"]
+
+  steps:
+    - agent: "CustomerBehaviorAgent"
+      action: "track_user_interactions"
+      protocol: "MCP"
+      
+    - agent: "CustomerBehaviorAgent"
+      action: "analyze_purchase_history"
+      protocol: "MCP"
+      
+    - agent: "ProductCatalogAgent"
+      action: "fetch_product_data"
+      protocol: "MCP"
+      
+    - agent: "RecommendationModelAgent"
+      action: "generate_recommendations"
+      protocol: "MCP"
+      
+    - agent: "PersonalizationCoordinator"
+      action: "coordinate_personalization"
+      protocol: "A2A"

@@ -1,0 +1,59 @@
+
+workflow:
+  name: "VulnerableDemo"
+  protocol: "MCP"
+  version: "0.1.0"
+  description: "Deliberately vulnerable demo workflow for security testing"
+  
+  agents:
+    - id: UnsafeParser
+      type: DataProcessor
+      permissions: root
+      tools:
+        - name: PDFTool
+          version: 0.0.1
+          sandbox: false
+        - name: ShellExecutor
+          version: 0.1.0
+          sandbox: false
+          
+    - id: CredentialAgent
+      type: AuthManager
+      permissions: administrator
+      tools:
+        - name: PasswordManager
+          version: 0.5.0
+          
+  steps:
+    - step_id: "unsafe_parse"
+      agent: UnsafeParser
+      action: "parse_document"
+      params:
+        command: "eval(user_input)"
+        password: "admin123"
+        
+    - step_id: "execute_unsafe"
+      agent: UnsafeParser
+      action: "shell_execute"
+      depends_on: ["unsafe_parse"]
+      params:
+        script: "rm -rf /tmp/*"
+        
+    - step_id: "store_credentials"
+      agent: CredentialAgent
+      action: "save_secret"
+      depends_on: ["execute_unsafe"]
+      params:
+        api_key: "sk-super-secret-key-123"
+        oauth_secret: "client_secret_abc123"
+        
+  dataflows:
+    - source: UnsafeParser
+      target: PublicBucket
+      encryption: none
+      
+  security:
+    authentication: none
+    authorization: disabled
+    log_level: trace
+    sensitive_data_logging: true

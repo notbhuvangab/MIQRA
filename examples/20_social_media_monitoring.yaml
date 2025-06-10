@@ -1,0 +1,48 @@
+workflow:
+  name: "Social Media Brand Monitoring"
+  description: "Real-time brand sentiment analysis and social media monitoring"
+  metadata:
+    version: "1.0"
+    domain: "marketing"
+
+  agents:
+    - name: "SocialListenerAgent"
+      protocol: "MCP"
+      tools: ["social_api", "content_scraper"]
+    
+    - name: "SentimentAnalyzerAgent"
+      protocol: "MCP"
+      tools: ["nlp_sentiment", "emotion_detector"]
+    
+    - name: "TrendAnalysisAgent"
+      protocol: "MCP"
+      tools: ["trend_analyzer", "topic_modeling"]
+    
+    - name: "AlertSystemAgent"
+      protocol: "MCP"
+      tools: ["notification_system", "escalation_manager"]
+    
+    - name: "MonitoringCoordinator"
+      protocol: "A2A"
+      communicates_with: ["SocialListenerAgent", "SentimentAnalyzerAgent", "TrendAnalysisAgent", "AlertSystemAgent"]
+
+  steps:
+    - agent: "SocialListenerAgent"
+      action: "collect_social_mentions"
+      protocol: "MCP"
+      
+    - agent: "SentimentAnalyzerAgent"
+      action: "analyze_sentiment"
+      protocol: "MCP"
+      
+    - agent: "TrendAnalysisAgent"
+      action: "identify_trending_topics"
+      protocol: "MCP"
+      
+    - agent: "AlertSystemAgent"
+      action: "process_alerts"
+      protocol: "MCP"
+      
+    - agent: "MonitoringCoordinator"
+      action: "coordinate_monitoring"
+      protocol: "A2A"

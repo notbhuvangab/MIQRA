@@ -22,6 +22,7 @@ Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+License-File: LICENSE
 Requires-Dist: PyYAML==6.0.1
 Requires-Dist: click==8.1.7
 Requires-Dist: tabulate==0.9.0
@@ -31,6 +32,16 @@ Requires-Dist: jinja2==3.1.2
 Requires-Dist: matplotlib==3.7.2
 Requires-Dist: numpy==1.24.3
 Requires-Dist: pandas==2.0.3
+Requires-Dist: streamlit==1.29.0
+Requires-Dist: plotly==5.17.0
+Requires-Dist: streamlit-agraph==0.0.45
+Requires-Dist: streamlit-option-menu==0.3.6
+Requires-Dist: graphviz==0.20.1
+Requires-Dist: pillow==10.1.0
+Requires-Dist: requests==2.31.0
+Requires-Dist: reportlab==4.0.7
+Requires-Dist: seaborn==0.12.2
+Requires-Dist: kaleido==0.2.1
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0; extra == "dev"
 Requires-Dist: pytest-cov>=4.0; extra == "dev"
@@ -47,6 +58,7 @@ Dynamic: description
 Dynamic: description-content-type
 Dynamic: home-page
 Dynamic: keywords
+Dynamic: license-file
 Dynamic: project-url
 Dynamic: provides-extra
 Dynamic: requires-dist
@@ -59,12 +71,14 @@ A comprehensive security risk assessment tool for agentic workflows using the MA
 
 ## Overview
 
-The MAESTRO Threat Assessment Framework provides enterprise-grade security analysis for AI agentic workflows. It implements the latest MAESTRO security framework with enhanced risk quantification formulas, including:
+The MAESTRO Threat Assessment Framework provides enterprise-grade security analysis for AI agentic workflows. It implements the latest MAESTRO security framework with enhanced risk quantification formulas and Monte Carlo uncertainty estimation, including:
 
-- **Workflow Exploitability Index (WEI)** - MAESTRO-layered vulnerability assessment
-- **Risk Propagation Score (RPS)** - Cross-layer risk analysis
+- **Workflow Exploitability Index (WEI)** - MAESTRO-layered vulnerability assessment with statistical confidence intervals
+- **Risk Propagation Score (RPS)** - Cross-layer risk analysis with uncertainty quantification
+- **Monte Carlo Risk Assessment** - Probabilistic analysis with 10,000 simulation runs for robust uncertainty estimation
 - **Total Cost of Ownership (TCO)** - Enterprise cost impact evaluation
-- **Comprehensive Reporting** - Executive summaries and detailed technical reports
+- **Comprehensive Reporting** - Executive summaries and detailed technical reports with confidence intervals
+- **Interactive Web GUI** - Modern web interface with flowchart visualization and uncertainty displays
 
 ## Features
 
@@ -72,9 +86,39 @@ The MAESTRO Threat Assessment Framework provides enterprise-grade security analy
 
 - **YAML Workflow Parsing**: Parse and analyze workflow definitions with agent interactions and data flows
 - **Vulnerability Identification**: Automatic detection of security risks across all MAESTRO layers
-- **Risk Quantification**: Calculate WEI and RPS scores using CSA 2025 threat statistics
+- **Monte Carlo Risk Quantification**: Calculate WEI and RPS scores with statistical uncertainty using 10,000 simulation runs
+- **Uncertainty Analysis**: 95% confidence intervals for all risk metrics with robust statistical foundation
 - **Cost Assessment**: Enterprise cost estimation with ROI analysis
-- **Multiple Output Formats**: CLI, JSON, tables, and executive summaries
+- **Multiple Output Formats**: CLI, JSON, tables, and executive summaries with uncertainty bounds
+- **Interactive Web GUI**: Modern Streamlit-based interface with uncertainty visualization
+
+### 🎲 Monte Carlo Risk Assessment
+
+The framework implements probabilistic risk assessment using Monte Carlo simulation to quantify uncertainty in:
+
+- **Attack Complexity**: Distribution-based estimates of exploitation difficulty
+- **Business Impact**: Probabilistic assessment of potential damage
+- **Vulnerability Severity**: CVSS-like scoring with confidence intervals  
+- **Protocol Coupling**: Inter-component dependency risk estimation
+- **Layer Exposure**: MAESTRO layer-specific risk exposure with uncertainty
+
+Each assessment runs 10,000 Monte Carlo simulations to provide:
+- Mean risk scores with standard deviations
+- 95% confidence intervals for all metrics
+- Percentile distributions (5th, 25th, 50th, 75th, 95th)
+- Robust statistical foundation for enterprise decision-making
+
+### 🌐 Web GUI Features
+
+The MAESTRO framework now includes a comprehensive web interface with:
+
+- **📤 YAML Workflow Upload**: Drag-and-drop or paste workflow definitions
+- **🔄 Interactive Flowchart**: Visualize workflow steps with threat mapping and severity colors
+- **⚙️ Configurable Risk Parameters**: Customize LayerWeight_l, ExposureIndex_l, VulnerabilityComplexity_l, and EnterpriseCost_l
+- **🏗️ MAESTRO Layer Visualization**: Interactive charts showing WEI/RPS contributions by layer
+- **💰 Cost Analysis Dashboard**: Visual cost breakdown and ROI analysis
+- **📊 Comprehensive Reporting**: Executive summaries with downloadable reports
+- **🎯 Threat Mapping**: Color-coded visualization of vulnerabilities by severity
 
 ### MAESTRO Framework Layers
 
@@ -107,13 +151,30 @@ pip install -e .
 
 ## Quick Start
 
-### 1. Analyze a Workflow (Quick Assessment)
+### 🌐 Web GUI (Recommended)
+
+Launch the interactive web interface:
+
+```bash
+python run_gui.py
+```
+
+This will start the Streamlit application at `http://localhost:8501` with features including:
+- Interactive workflow upload and analysis
+- Real-time threat visualization with flowchart
+- Configurable risk model parameters (custom button option)
+- Comprehensive dashboard with MAESTRO layer analysis
+- Export capabilities for reports and summaries
+
+### 📋 Command Line Interface
+
+#### 1. Analyze a Workflow (Quick Assessment)
 
 ```bash
 python -m maestro_threat_assessment.cli.main quick examples/financial_analysis_workflow.yaml
 ```
 
-### 2. Full MAESTRO Assessment
+#### 2. Full MAESTRO Assessment
 
 ```bash
 python -m maestro_threat_assessment.cli.main assess examples/financial_analysis_workflow.yaml \
@@ -122,7 +183,7 @@ python -m maestro_threat_assessment.cli.main assess examples/financial_analysis_
   --format summary
 ```
 
-### 3. Generate JSON Report
+#### 3. Generate JSON Report
 
 ```bash
 python -m maestro_threat_assessment.cli.main assess examples/financial_analysis_workflow.yaml \
@@ -172,9 +233,11 @@ report = engine.assess_workflow_from_file(
     industry='financial'
 )
 
-# Access results
+# Access results with uncertainty
 print(f"Risk Level: {report.risk_assessment.risk_level}")
-print(f"WEI Score: {report.risk_assessment.total_wei}")
+print(f"WEI Score: {report.risk_assessment.total_wei.mean:.3f} ± {report.risk_assessment.total_wei.std_dev:.3f}")
+print(f"WEI 95% CI: [{report.risk_assessment.total_wei.confidence_interval[0]:.3f}, {report.risk_assessment.total_wei.confidence_interval[1]:.3f}]")
+print(f"RPS Score: {report.risk_assessment.total_rps.mean:.3f} ± {report.risk_assessment.total_rps.std_dev:.3f}")
 print(f"TCO: ${report.cost_assessment.total_tco:,.0f}")
 ```
 
@@ -317,3 +380,35 @@ For questions, issues, or feature requests:
 ---
 
 **Note**: This tool provides risk assessment guidance. Always consult with security professionals for production deployments.
+
+## GUI Usage Guide
+
+### 🏠 Home Page
+- Framework overview and MAESTRO layer descriptions
+- Sample YAML format and getting started guide
+
+### 📤 Upload Workflow
+- Upload YAML files or paste content directly
+- Configure assessment parameters (base cost, enterprise size, industry)
+- Run comprehensive MAESTRO assessment
+
+### ⚙️ Configure Parameters
+The quantitative risk model supports both default and custom parameters:
+- **Default Mode**: Uses fixed values based on industry standards
+- **Custom Mode**: Allows configuration of:
+  - `LayerWeight_l`: Importance weights for each MAESTRO layer
+  - `ExposureIndex_l`: Exposure levels by layer
+  - `VulnerabilityComplexity_l`: Attack complexity factors
+  - `EnterpriseCost_l`: Cost weights for security investments
+
+### 📊 Assessment Results
+- **Interactive Flowchart**: Nodes colored by vulnerability severity (🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low)
+- **MAESTRO Layer Analysis**: Multi-chart visualization of WEI/RPS contributions
+- **Cost Analysis**: Visual breakdown of security investments and ROI
+- **Vulnerability Table**: Detailed listing of all identified threats
+- **Strategic Recommendations**: Actionable security guidance
+
+### 📄 Export Reports
+- **JSON Reports**: Complete assessment data for integration
+- **Executive Summaries**: High-level markdown reports for stakeholders
+- **Real-time Metrics**: Current assessment overview with key indicators

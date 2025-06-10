@@ -1,0 +1,44 @@
+workflow:
+  name: "Autonomous Logistics Platform"
+  description: "Automated warehouse and delivery operations with autonomous vehicles"
+  metadata:
+    version: "1.0"
+    domain: "logistics"
+
+  agents:
+    - name: "WarehouseRobotAgent"
+      protocol: "MCP"
+      tools: ["warehouse_navigation", "inventory_scanner"]
+    
+    - name: "DeliveryPlannerAgent"
+      protocol: "MCP"
+      tools: ["route_planner", "traffic_analyzer"]
+    
+    - name: "VehicleFleetAgent"
+      protocol: "MCP"
+      tools: ["fleet_management", "vehicle_monitor"]
+    
+    - name: "LogisticsCoordinator"
+      protocol: "A2A" 
+      communicates_with: ["WarehouseRobotAgent", "DeliveryPlannerAgent", "VehicleFleetAgent"]
+
+  steps:
+    - agent: "WarehouseRobotAgent"
+      action: "navigate_warehouse"
+      protocol: "MCP"
+      
+    - agent: "WarehouseRobotAgent"
+      action: "pick_and_pack_orders"
+      protocol: "MCP"
+      
+    - agent: "DeliveryPlannerAgent"
+      action: "plan_delivery_routes"
+      protocol: "MCP"
+      
+    - agent: "VehicleFleetAgent"
+      action: "monitor_vehicle_status"
+      protocol: "MCP"
+      
+    - agent: "LogisticsCoordinator"
+      action: "coordinate_logistics_operations"
+      protocol: "A2A" 

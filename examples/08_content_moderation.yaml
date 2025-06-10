@@ -1,0 +1,35 @@
+workflow:
+  name: "Content Moderation Pipeline"
+  description: "Moderate user-generated content for safety"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "ContentScanner"
+      protocol: "MCP"
+      tools: ["image_analyzer", "text_classifier"]
+    
+    - name: "ModelAgent"
+      protocol: "MCP"
+      tools: ["safety_classifier"]
+    
+    - name: "ModerationCoordinator"
+      protocol: "A2A"
+      communicates_with: ["ContentScanner", "ModelAgent"]
+
+  steps:
+    - agent: "ContentScanner"
+      action: "scan_content"
+      protocol: "MCP"
+      
+    - agent: "ModelAgent"
+      action: "analyze"
+      protocol: "MCP"
+      
+    - agent: "ModelAgent"
+      action: "classify_safety"
+      protocol: "MCP"
+      
+    - agent: "ModerationCoordinator"
+      action: "make_decision"
+      protocol: "A2A" 

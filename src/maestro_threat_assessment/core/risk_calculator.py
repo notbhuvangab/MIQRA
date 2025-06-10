@@ -1,10 +1,10 @@
 """
 MAESTRO Risk Calculator
 
-Implements the enhanced risk quantification formulas:
+Implements the enhanced risk quantification formulas with Monte Carlo estimation:
 - MAESTRO-Layered Workflow Exploitability Index (WEI)
 - MAESTRO-Aware Risk Propagation Score (RPS)
-- Cross-layer dependency analysis
+- Monte Carlo uncertainty quantification
 """
 
 import numpy as np
@@ -17,66 +17,72 @@ from ..models.maestro_constants import (
     PROTOCOL_COUPLING_SCALE
 )
 from .workflow_parser import ParsedWorkflow
+from .monte_carlo_estimator import MonteCarloEstimator, MonteCarloResult
 
 @dataclass
 class LayerRiskScore:
-    """Risk score for a specific MAESTRO layer"""
+    """Risk score for a specific MAESTRO layer with uncertainty"""
     layer: MAESTROLayer
-    attack_complexity: float
-    business_impact: float
+    attack_complexity: MonteCarloResult
+    business_impact: MonteCarloResult
+    vulnerability_severity: MonteCarloResult
+    protocol_coupling: MonteCarloResult
     vulnerability_count: int
-    wei_contribution: float
-    rps_contribution: float
+    wei_contribution: MonteCarloResult
+    rps_contribution: MonteCarloResult
 
 @dataclass
 class RiskAssessmentResult:
-    """Complete risk assessment result"""
+    """Complete risk assessment result with Monte Carlo uncertainty"""
     workflow_name: str
-    total_wei: float
-    total_rps: float
+    total_wei: MonteCarloResult
+    total_rps: MonteCarloResult
     layer_scores: Dict[MAESTROLayer, LayerRiskScore]
     vulnerabilities_by_layer: Dict[MAESTROLayer, List[Dict[str, Any]]]
     risk_level: str
+    confidence_interval: Tuple[float, float]
     recommendations: List[str]
 
 class RiskCalculator:
-    """MAESTRO-enhanced risk calculator"""
+    """MAESTRO-enhanced risk calculator with Monte Carlo estimation"""
     
-    def __init__(self):
-        # Optimized risk thresholds based on actual combined risk distribution
-        # Updated to match balanced analysis for professor demonstration
+    def __init__(self, n_simulations: int = 10000):
+        self.monte_carlo = MonteCarloEstimator()
+        self.n_simulations = n_simulations
+        
+        # Risk thresholds based on combined WEI+RPS score (calibrated)
         self.risk_thresholds = {
-            'low': 0.0,        # Low risk: 0 to 0.30
-            'medium': 0.30,    # Medium risk: 0.30 to 0.55  
-            'high': 0.55,      # High risk: 0.55 to 0.75
-            'critical': 0.75   # Critical risk: 0.75+
+            'low': 0.0,        # Low risk: 0 to 0.219
+            'medium': 0.219,   # Medium risk: 0.219 to 0.481  
+            'high': 0.481,     # High risk: 0.481 to 0.527
+            'critical': 0.527  # Critical risk: 0.527+
         }
     
     def calculate_risk(self, workflow: ParsedWorkflow, vulnerabilities: List[Dict[str, Any]]) -> RiskAssessmentResult:
         """
-        Calculate comprehensive risk assessment using MAESTRO framework
+        Calculate comprehensive risk assessment using MAESTRO framework with Monte Carlo estimation
         
         Args:
             workflow: Parsed workflow object
             vulnerabilities: List of identified vulnerabilities
             
         Returns:
-            Complete risk assessment result
+            Complete risk assessment result with uncertainty quantification
         """
         # Group vulnerabilities by MAESTRO layer
         vulnerabilities_by_layer = self._group_vulnerabilities_by_layer(vulnerabilities)
         
-        # Calculate layer-specific risk scores
-        layer_scores = self._calculate_layer_scores(workflow, vulnerabilities_by_layer)
+        # Calculate layer-specific risk scores with Monte Carlo estimation
+        layer_scores = self._calculate_layer_scores_with_uncertainty(workflow, vulnerabilities_by_layer)
         
-        # Calculate MAESTRO-Layered WEI
-        total_wei = self._calculate_maestro_wei(layer_scores, len(workflow.steps))
+        # Calculate MAESTRO-Layered WEI with uncertainty
+        total_wei = self._calculate_maestro_wei_with_uncertainty(layer_scores, len(workflow.steps))
         
-        # Calculate MAESTRO-Aware RPS
-        total_rps = self._calculate_maestro_rps(layer_scores, vulnerabilities_by_layer)
+        # Calculate MAESTRO-Aware RPS with uncertainty
+        total_rps = self._calculate_maestro_rps_with_uncertainty(layer_scores, vulnerabilities_by_layer)
         
-        # Determine overall risk level
-        risk_level = self._determine_risk_level(total_wei, total_rps)
+        # Determine overall risk level and confidence interval
+        risk_level, confidence_interval = self._determine_risk_level_with_uncertainty(total_wei, total_rps)
         
         # Generate recommendations
         recommendations = self._generate_recommendations(layer_scores, vulnerabilities_by_layer)
@@ -88,6 +94,7 @@ class RiskCalculator:
             layer_scores=layer_scores,
             vulnerabilities_by_layer=vulnerabilities_by_layer,
             risk_level=risk_level,
+            confidence_interval=confidence_interval,
             recommendations=recommendations
         )
     
@@ -102,32 +109,39 @@ class RiskCalculator:
         
         return vulnerabilities_by_layer
     
-    def _calculate_layer_scores(self, workflow: ParsedWorkflow, 
+    def _calculate_layer_scores_with_uncertainty(self, workflow: ParsedWorkflow, 
                               vulnerabilities_by_layer: Dict[MAESTROLayer, List[Dict[str, Any]]]) -> Dict[MAESTROLayer, LayerRiskScore]:
-        """Calculate risk scores for each MAESTRO layer"""
+        """Calculate risk scores for each MAESTRO layer with Monte Carlo uncertainty estimation"""
         layer_scores = {}
         
         for layer in MAESTROLayer:
             layer_vulns = vulnerabilities_by_layer[layer]
             
-            # Calculate average attack complexity for this layer
-            attack_complexity = self._calculate_average_attack_complexity(layer_vulns)
+            # Estimate vulnerability parameters with uncertainty using Monte Carlo
+            mc_results = self.monte_carlo.estimate_vulnerability_parameters(layer_vulns)
             
-            # Calculate business impact based on workflow characteristics
-            business_impact = self._calculate_business_impact(workflow, layer, layer_vulns)
+            # Get uncertainty estimates for each parameter
+            attack_complexity = mc_results['attack_complexity']
+            business_impact = mc_results['impact']
+            vulnerability_severity = mc_results['vulnerability_severity']
+            protocol_coupling = mc_results['protocol_coupling']
             
-            # Calculate WEI contribution for this layer
-            wei_contribution = self._calculate_wei_contribution(
+            # Calculate WEI contribution with uncertainty
+            wei_contribution = self._calculate_wei_contribution_with_uncertainty(
                 attack_complexity, business_impact, layer
             )
             
-            # Calculate RPS contribution for this layer
-            rps_contribution = self._calculate_rps_contribution(layer, layer_vulns)
+            # Calculate RPS contribution with uncertainty
+            rps_contribution = self._calculate_rps_contribution_with_uncertainty(
+                layer, vulnerability_severity, protocol_coupling
+            )
             
             layer_scores[layer] = LayerRiskScore(
                 layer=layer,
                 attack_complexity=attack_complexity,
                 business_impact=business_impact,
+                vulnerability_severity=vulnerability_severity,
+                protocol_coupling=protocol_coupling,
                 vulnerability_count=len(layer_vulns),
                 wei_contribution=wei_contribution,
                 rps_contribution=rps_contribution
@@ -135,232 +149,147 @@ class RiskCalculator:
         
         return layer_scores
     
-    def _calculate_average_attack_complexity(self, vulnerabilities: List[Dict[str, Any]]) -> float:
-        """Calculate average attack complexity for vulnerabilities in a layer"""
-        if not vulnerabilities:
-            return 3.0  # Default high complexity if no vulnerabilities
-        
-        complexity_sum = 0
-        for vuln in vulnerabilities:
-            severity = vuln.get('severity', 'medium')
-            vuln_type = vuln.get('type', 'unknown')
-            
-            # Map vulnerability types to attack complexity (1=low, 2=medium, 3=high)
-            complexity_mapping = {
-                # Low complexity attacks (easy to exploit)
-                'data_leakage': 1,
-                'compliance_violation': 1,
-                'privacy_violation': 1,
-                
-                # Medium complexity attacks (moderate skill required)
-                'prompt_injection': 2,
-                'tool_poisoning': 2,
-                'agent_impersonation': 2,
-                'privilege_escalation': 2,
-                'monitoring_evasion': 3,
-                
-                # High complexity attacks (sophisticated skill required)
-                'model_poisoning': 2,  # Easier than expected with poisoned datasets
-                'supply_chain_attack': 3,
-                'sandbox_escape': 3
-            }
-            
-            # Use vulnerability type mapping if available, otherwise use severity
-            if vuln_type in complexity_mapping:
-                complexity_sum += complexity_mapping[vuln_type]
-            else:
-                # Fallback to severity-based mapping
-                if severity == 'critical':
-                    complexity_sum += 1  # Critical vulnerabilities are often easier to exploit
-                elif severity == 'high':
-                    complexity_sum += 2
-                else:
-                    complexity_sum += 3
-        
-        return complexity_sum / len(vulnerabilities)
-    
-    def _calculate_business_impact(self, workflow: ParsedWorkflow, layer: MAESTROLayer, 
-                                 vulnerabilities: List[Dict[str, Any]]) -> float:
-        """Calculate business impact for a specific layer with more balanced scaling"""
-        base_impact = 1.5  # Reduced base impact from 2.0 to 1.5
-        
-        # More conservative sensitivity multipliers
-        sensitivity = workflow.metadata.get('sensitivity', 'medium')
-        sensitivity_multipliers = {
-            'low': 0.8,      # Reduced from 1.0
-            'medium': 1.0,   # Reduced from 1.5  
-            'high': 1.3,     # Reduced from 2.0
-            'critical': 1.6  # Reduced from 2.5
-        }
-        base_impact *= sensitivity_multipliers.get(sensitivity, 1.0)
-        
-        # More conservative workflow characteristic bonuses
-        if 'financial' in workflow.name.lower() or 'payment' in workflow.name.lower():
-            base_impact += 1.0  # Reduced from 2.0
-        if 'customer' in workflow.name.lower() or 'user' in workflow.name.lower():
-            base_impact += 0.8  # Reduced from 1.5
-        if len(workflow.steps) > 5:
-            base_impact += 0.5  # Reduced from 1.0
-        
-        # More conservative compliance framework bonuses
-        compliance_frameworks = workflow.metadata.get('compliance_frameworks', [])
-        critical_frameworks = ['SOX', 'PCI_DSS', 'GDPR', 'HIPAA', 'BASEL_III']
-        if any(framework in critical_frameworks for framework in compliance_frameworks):
-            base_impact += 0.8  # Reduced from 1.5
-        
-        # More conservative layer multipliers
-        if 'financial' in workflow.name.lower():
-            layer_multipliers = {
-                MAESTROLayer.L1_FOUNDATION_MODELS: 1.2,  # Reduced from 1.5
-                MAESTROLayer.L2_DATA_OPERATIONS: 1.2,    # Reduced from 1.5
-                MAESTROLayer.L3_AGENT_FRAMEWORKS: 1.2,   # Reduced from 1.5
-                MAESTROLayer.L4_DEPLOYMENT: 1.1,         # Reduced from 1.3
-                MAESTROLayer.L5_OBSERVABILITY: 0.9,      # Same
-                MAESTROLayer.L6_COMPLIANCE: 1.1,         # Reduced from 1.3
-                MAESTROLayer.L7_ECOSYSTEM: 0.9           # Reduced from 1.0
-            }
-        else:
-            layer_multipliers = {
-                MAESTROLayer.L1_FOUNDATION_MODELS: 1.1,  # Reduced from 1.2
-                MAESTROLayer.L2_DATA_OPERATIONS: 1.1,    # Reduced from 1.3
-                MAESTROLayer.L3_AGENT_FRAMEWORKS: 1.2,   # Reduced from 1.4
-                MAESTROLayer.L4_DEPLOYMENT: 1.0,         # Reduced from 1.1
-                MAESTROLayer.L5_OBSERVABILITY: 0.8,      # Reduced from 0.9
-                MAESTROLayer.L6_COMPLIANCE: 1.2,         # Reduced from 1.5
-                MAESTROLayer.L7_ECOSYSTEM: 0.9           # Reduced from 1.0
-            }
-        
-        base_impact *= layer_multipliers.get(layer, 1.0)
-        
-        # More conservative vulnerability severity bonuses
-        if vulnerabilities:
-            critical_count = sum(1 for v in vulnerabilities if v.get('severity') == 'critical')
-            high_count = sum(1 for v in vulnerabilities if v.get('severity') == 'high')
-            base_impact += (critical_count * 0.5) + (high_count * 0.3)  # Reduced from 1.0 and 0.5
-        
-        return min(base_impact, 4.0)  # Reduced cap from 5.0 to 4.0
-    
-    def _calculate_wei_contribution(self, attack_complexity: float, business_impact: float, 
-                                  layer: MAESTROLayer) -> float:
+    def _calculate_wei_contribution_with_uncertainty(self, attack_complexity: MonteCarloResult, 
+                                                   business_impact: MonteCarloResult, 
+                                                   layer: MAESTROLayer) -> MonteCarloResult:
         """
-        Calculate WEI contribution for a layer using MAESTRO formula:
-        (AC^-1 × Impact × LayerWeight)
-        """
-        # Convert attack complexity to inverse (easier attacks = higher risk)
-        ac_inverse = 1.0 / max(attack_complexity, 0.1)
+        Calculate WEI contribution for a layer using Monte Carlo simulation
         
-        # Get layer weight
+        Formula: WEI_layer = (1/AC) * Impact * LayerWeight
+        """
         layer_weight = MAESTRO_LAYER_WEIGHTS[layer]
         
-        # Calculate contribution
-        contribution = ac_inverse * business_impact * layer_weight
+        # Perform element-wise calculation across all Monte Carlo samples
+        wei_samples = (1.0 / attack_complexity.samples) * business_impact.samples * layer_weight
         
-        return contribution
+        # Calculate statistics for the resulting distribution
+        return self._create_monte_carlo_result_from_samples(wei_samples)
     
-    def _calculate_rps_contribution(self, layer: MAESTROLayer, 
-                                  vulnerabilities: List[Dict[str, Any]]) -> float:
+    def _calculate_rps_contribution_with_uncertainty(self, layer: MAESTROLayer,
+                                                   vulnerability_severity: MonteCarloResult,
+                                                   protocol_coupling: MonteCarloResult) -> MonteCarloResult:
         """
-        Calculate RPS contribution for a layer using MAESTRO formula:
-        Σ(VS × PC × EI)
+        Calculate RPS contribution for a layer using Monte Carlo simulation
+        
+        Formula: RPS_layer = VS * PC * ExposureIndex
         """
-        if not vulnerabilities:
-            return 0.0
+        exposure_index = MAESTRO_EXPOSURE_INDEX[layer]
         
-        total_rps = 0.0
-        layer_exposure = MAESTRO_EXPOSURE_INDEX[layer]
+        # Perform element-wise calculation across all Monte Carlo samples
+        rps_samples = vulnerability_severity.samples * protocol_coupling.samples * exposure_index
         
-        for vuln in vulnerabilities:
-            # Map severity to vulnerability severity score (1-10)
-            severity = vuln.get('severity', 'medium')
-            vs_score = VULNERABILITY_SEVERITY_SCALE.get(severity, 4)
-            
-            # Estimate protocol coupling factor based on vulnerability type
-            pc_factor = self._estimate_protocol_coupling(vuln)
-            
-            # Calculate contribution: VS × PC × EI
-            contribution = vs_score * pc_factor * layer_exposure
-            total_rps += contribution
-        
-        return total_rps
+        # Calculate statistics for the resulting distribution
+        return self._create_monte_carlo_result_from_samples(rps_samples)
     
-    def _estimate_protocol_coupling(self, vulnerability: Dict[str, Any]) -> float:
-        """Estimate protocol coupling factor based on vulnerability characteristics"""
-        vuln_type = vulnerability.get('type', 'unknown')
+    def _calculate_maestro_wei_with_uncertainty(self, layer_scores: Dict[MAESTROLayer, LayerRiskScore], 
+                                              total_workflow_nodes: int) -> MonteCarloResult:
+        """
+        Calculate total MAESTRO WEI with uncertainty
         
-        # High coupling vulnerabilities
-        high_coupling = [
-            'agent_impersonation', 'protocol_manipulation', 
-            'tool_poisoning', 'supply_chain_attack'
-        ]
+        Formula: WEI = Σ(WEI_layer) / workflow_node_count
+        """
+        # Sum all layer WEI contributions across Monte Carlo samples
+        total_wei_samples = np.zeros(self.n_simulations)
         
-        # Medium coupling vulnerabilities  
-        medium_coupling = [
-            'prompt_injection', 'data_leakage', 'sandbox_escape',
-            'privilege_escalation'
-        ]
+        for layer_score in layer_scores.values():
+            total_wei_samples += layer_score.wei_contribution.samples
         
-        if vuln_type in high_coupling:
-            return 3.0
-        elif vuln_type in medium_coupling:
-            return 2.0
+        # Normalize by workflow node count
+        total_wei_samples = total_wei_samples / max(total_workflow_nodes, 1)
+        
+        return self._create_monte_carlo_result_from_samples(total_wei_samples)
+    
+    def _calculate_maestro_rps_with_uncertainty(self, layer_scores: Dict[MAESTROLayer, LayerRiskScore],
+                                              vulnerabilities_by_layer: Dict[MAESTROLayer, List[Dict[str, Any]]]) -> MonteCarloResult:
+        """
+        Calculate total MAESTRO RPS with uncertainty
+        
+        Formula: RPS = Σ(RPS_layer)
+        """
+        # Sum all layer RPS contributions across Monte Carlo samples
+        total_rps_samples = np.zeros(self.n_simulations)
+        
+        for layer_score in layer_scores.values():
+            total_rps_samples += layer_score.rps_contribution.samples
+        
+        return self._create_monte_carlo_result_from_samples(total_rps_samples)
+    
+    def _create_monte_carlo_result_from_samples(self, samples: np.ndarray) -> MonteCarloResult:
+        """Create a MonteCarloResult from samples array"""
+        mean = np.mean(samples)
+        std_dev = np.std(samples)
+        
+        # Calculate confidence interval (95% by default)
+        confidence_interval = (
+            np.percentile(samples, 2.5),
+            np.percentile(samples, 97.5)
+        )
+        
+        # Calculate key percentiles
+        percentiles = {
+            5: np.percentile(samples, 5),
+            25: np.percentile(samples, 25),
+            50: np.percentile(samples, 50),
+            75: np.percentile(samples, 75),
+            95: np.percentile(samples, 95)
+        }
+        
+        return MonteCarloResult(
+            mean=mean,
+            std_dev=std_dev,
+            confidence_interval=confidence_interval,
+            percentiles=percentiles,
+            samples=samples
+        )
+    
+    def _determine_risk_level_with_uncertainty(self, wei: MonteCarloResult, rps: MonteCarloResult) -> Tuple[str, Tuple[float, float]]:
+        """
+        Determine risk level based on combined WEI and RPS with uncertainty
+        
+        Formula: Combined Risk = (WEI × 0.7) + (RPS/30 × 0.3)
+        """
+        # Calculate combined risk score using the correct formula
+        # RPS needs to be normalized by 30 to match WEI scale
+        normalized_rps_samples = rps.samples / 30.0
+        combined_risk_samples = (wei.samples * 0.7) + (normalized_rps_samples * 0.3)
+        
+        # Determine risk level based on mean combined score
+        mean_combined_risk = np.mean(combined_risk_samples)
+        
+        if mean_combined_risk >= self.risk_thresholds['critical']:
+            risk_level = 'critical'
+        elif mean_combined_risk >= self.risk_thresholds['high']:
+            risk_level = 'high'
+        elif mean_combined_risk >= self.risk_thresholds['medium']:
+            risk_level = 'medium'
         else:
-            return 1.0
-    
-    def _calculate_maestro_wei(self, layer_scores: Dict[MAESTROLayer, LayerRiskScore], 
-                             total_workflow_nodes: int) -> float:
-        """
-        Calculate MAESTRO-Layered WEI using the formula:
-        WEI_MAESTRO = Σ(AC^-1 × Impact × LayerWeight) / TotalWorkflowNodes
-        """
-        total_wei_sum = sum(score.wei_contribution for score in layer_scores.values())
-        return total_wei_sum / max(total_workflow_nodes, 1)
-    
-    def _calculate_maestro_rps(self, layer_scores: Dict[MAESTROLayer, LayerRiskScore],
-                             vulnerabilities_by_layer: Dict[MAESTROLayer, List[Dict[str, Any]]]) -> float:
-        """
-        Calculate MAESTRO-Aware RPS using the formula:
-        RPS_MAESTRO = Σ Σ(VS × PC × EI)
-        """
-        return sum(score.rps_contribution for score in layer_scores.values())
-    
-    def _determine_risk_level(self, wei: float, rps: float) -> str:
-        """Determine overall risk level based on WEI and RPS scores with improved scaling"""
-        # Improved combined risk calculation with better RPS normalization
-        # Scale RPS more conservatively and adjust weights
-        normalized_rps = rps / 30.0  # Better normalization for typical RPS range (0-60)
-        combined_risk = (wei * 0.7) + (normalized_rps * 0.3)  # Adjusted weights: WEI 70%, RPS 30%
+            risk_level = 'low'
         
-        if combined_risk >= self.risk_thresholds['critical']:  # >= 0.75
-            return 'critical'
-        elif combined_risk >= self.risk_thresholds['high']:    # >= 0.55
-            return 'high'
-        elif combined_risk >= self.risk_thresholds['medium']:  # >= 0.30
-            return 'medium'
-        else:
-            return 'low'
+        # Calculate confidence interval for combined risk
+        confidence_interval = (
+            np.percentile(combined_risk_samples, 2.5),
+            np.percentile(combined_risk_samples, 97.5)
+        )
+        
+        return risk_level, confidence_interval
     
     def _generate_recommendations(self, layer_scores: Dict[MAESTROLayer, LayerRiskScore],
                                 vulnerabilities_by_layer: Dict[MAESTROLayer, List[Dict[str, Any]]]) -> List[str]:
-        """Generate security recommendations based on risk assessment"""
+        """Generate risk mitigation recommendations based on layer analysis"""
         recommendations = []
         
-        # Sort layers by risk contribution
-        sorted_layers = sorted(layer_scores.items(), 
-                             key=lambda x: x[1].wei_contribution + x[1].rps_contribution, 
-                             reverse=True)
+        # Sort layers by risk contribution (mean WEI + RPS)
+        sorted_layers = sorted(
+            layer_scores.items(),
+            key=lambda x: x[1].wei_contribution.mean + x[1].rps_contribution.mean,
+            reverse=True
+        )
         
         for layer, score in sorted_layers[:3]:  # Top 3 risky layers
-            layer_vulns = vulnerabilities_by_layer[layer]
-            if layer_vulns:
-                recommendations.extend(self._get_layer_recommendations(layer, score, layer_vulns))
-        
-        # Add general recommendations
-        recommendations.extend([
-            "Implement comprehensive logging and monitoring across all workflow steps",
-            "Establish regular security assessments and vulnerability scanning",
-            "Deploy defense-in-depth strategies across MAESTRO layers",
-            "Maintain updated incident response procedures for agentic workflows"
-        ])
+            layer_name = layer.name.replace('_', ' ').title()
+            
+            if score.vulnerability_count > 0:
+                recommendations.extend(self._get_layer_recommendations(layer, score, vulnerabilities_by_layer[layer]))
         
         return recommendations[:10]  # Limit to top 10 recommendations
     
@@ -368,43 +297,50 @@ class RiskCalculator:
                                  vulnerabilities: List[Dict[str, Any]]) -> List[str]:
         """Get specific recommendations for a MAESTRO layer"""
         recommendations = []
+        layer_name = layer.name.replace('_', ' ').title()
         
-        layer_recommendations = {
-            MAESTROLayer.L1_FOUNDATION_MODELS: [
-                "Implement robust prompt injection filters and validation",
-                "Deploy model output sanitization and content filtering",
-                "Establish model bias monitoring and mitigation controls"
-            ],
-            MAESTROLayer.L2_DATA_OPERATIONS: [
-                "Implement data anonymization and pseudonymization techniques", 
-                "Deploy vector database access controls and encryption",
-                "Establish data lineage tracking and audit capabilities"
-            ],
-            MAESTROLayer.L3_AGENT_FRAMEWORKS: [
-                "Implement agent authentication and authorization mechanisms",
-                "Deploy tool validation and sandboxing for agent interactions",
-                "Establish secure communication protocols between agents"
-            ],
-            MAESTROLayer.L4_DEPLOYMENT: [
+        # Layer-specific recommendations based on MAESTRO framework
+        if layer == MAESTROLayer.L1_FOUNDATION_MODELS:
+            recommendations.extend([
+                "Implement prompt injection protection and input validation",
+                "Deploy model hardening techniques and bias mitigation",
+                "Establish model governance and version control"
+            ])
+        elif layer == MAESTROLayer.L2_DATA_OPERATIONS:
+            recommendations.extend([
+                "Implement data anonymization and privacy controls",
+                "Secure vector databases and data pipelines",
+                "Deploy data loss prevention (DLP) solutions"
+            ])
+        elif layer == MAESTROLayer.L3_AGENT_FRAMEWORKS:
+            recommendations.extend([
+                "Implement agent protocol validation and tool vetting",
+                "Deploy agent sandboxing and isolation",
+                "Establish inter-agent communication security"
+            ])
+        elif layer == MAESTROLayer.L4_DEPLOYMENT:
+            recommendations.extend([
                 "Implement container security and runtime protection",
-                "Deploy zero-trust networking and micro-segmentation",
-                "Establish secure deployment pipelines and infrastructure hardening"
-            ],
-            MAESTROLayer.L5_OBSERVABILITY: [
-                "Deploy AI-specific security monitoring and analytics",
-                "Implement behavioral anomaly detection for agents",
-                "Establish comprehensive audit logging and forensic capabilities"
-            ],
-            MAESTROLayer.L6_COMPLIANCE: [
-                "Implement automated compliance monitoring and reporting",
-                "Deploy policy engines for regulatory requirement enforcement",
-                "Establish governance frameworks for AI/ML operations"
-            ],
-            MAESTROLayer.L7_ECOSYSTEM: [
-                "Implement third-party agent security assessment and vetting",
-                "Deploy supply chain security scanning and monitoring",
-                "Establish dependency management and vulnerability tracking"
-            ]
-        }
+                "Deploy Zero Trust networking architecture",
+                "Establish infrastructure hardening practices"
+            ])
+        elif layer == MAESTROLayer.L5_OBSERVABILITY:
+            recommendations.extend([
+                "Deploy AI-specific security monitoring",
+                "Implement anomaly detection and threat hunting",
+                "Establish comprehensive audit trails"
+            ])
+        elif layer == MAESTROLayer.L6_COMPLIANCE:
+            recommendations.extend([
+                "Implement governance frameworks and policy engines",
+                "Deploy regulatory compliance monitoring",
+                "Establish risk management processes"
+            ])
+        elif layer == MAESTROLayer.L7_ECOSYSTEM:
+            recommendations.extend([
+                "Implement supply chain security scanning",
+                "Deploy third-party component vetting",
+                "Establish dependency vulnerability management"
+            ])
         
-        return layer_recommendations.get(layer, [])[:2]  # Limit to 2 per layer 
+        return recommendations 

@@ -1,0 +1,48 @@
+workflow:
+  name: "Financial Risk Assessment"
+  description: "Analyze customer financial data for risk scoring"
+  metadata:
+    version: "1.0"
+    compliance: ["SOX", "PCI_DSS"]
+
+  agents:
+    - name: "FinancialDataAgent"
+      protocol: "MCP"
+      tools: ["database_connector", "financial_analyzer"]
+    
+    - name: "RiskModelAgent"
+      protocol: "MCP"
+      tools: ["ml_predictor", "risk_calculator"]
+    
+    - name: "ComplianceAgent"
+      protocol: "MCP"
+      tools: ["audit_logger"]
+    
+    - name: "WorkflowAgent"
+      protocol: "A2A"
+      communicates_with: ["FinancialDataAgent", "RiskModelAgent", "ComplianceAgent"]
+
+  steps:
+    - agent: "FinancialDataAgent"
+      action: "fetch_customer_records"
+      protocol: "MCP"
+      
+    - agent: "FinancialDataAgent"
+      action: "extract_financial_data"
+      protocol: "MCP"
+      
+    - agent: "RiskModelAgent"
+      action: "analyze_financial_risk"
+      protocol: "MCP"
+      
+    - agent: "RiskModelAgent"
+      action: "process_risk_predictions"
+      protocol: "MCP"
+      
+    - agent: "ComplianceAgent"
+      action: "execute"
+      protocol: "MCP"
+      
+    - agent: "WorkflowAgent"
+      action: "coordinate_assessment"
+      protocol: "A2A" 

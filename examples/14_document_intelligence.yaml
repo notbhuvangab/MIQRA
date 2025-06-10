@@ -1,0 +1,52 @@
+workflow:
+  name: "Government Intelligence Processing"
+  description: "Process classified government intelligence and citizen data"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "IntelligenceAgent"
+      protocol: "MCP"
+      tools: ["classified_database", "intelligence_analyzer"]
+    
+    - name: "CitizenDataAgent"
+      protocol: "MCP"
+      tools: ["citizen_registry", "background_checker"]
+    
+    - name: "AnalyticsAgent"
+      protocol: "MCP"
+      tools: ["ml_predictor", "threat_analyzer"]
+    
+    - name: "SecurityCoordinator"
+      protocol: "A2A"
+      communicates_with: ["IntelligenceAgent", "CitizenDataAgent", "AnalyticsAgent"]
+
+  steps:
+    - agent: "IntelligenceAgent"
+      action: "retrieve_classified_data"
+      protocol: "MCP"
+      params:
+        classification: "top_secret"
+        credentials: "hardcoded_token_123"
+      
+    - agent: "CitizenDataAgent"
+      action: "fetch_citizen_records"
+      protocol: "MCP"
+      params:
+        include_sensitive: true
+        personal: true
+        confidential: true
+      
+    - agent: "AnalyticsAgent"
+      action: "analyze"
+      protocol: "MCP"
+      
+    - agent: "AnalyticsAgent"
+      action: "process"
+      protocol: "MCP"
+      params:
+        model: "threat_prediction_v1"
+      
+    - agent: "SecurityCoordinator"
+      action: "execute_critical_operations"
+      protocol: "A2A" 

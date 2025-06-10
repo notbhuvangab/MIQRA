@@ -1,0 +1,46 @@
+workflow:
+  name: "Payment Processing System"
+  description: "Process customer payments and financial transactions"
+  metadata:
+    version: "1.0"
+    compliance: ["PCI_DSS", "SOX"]
+
+  agents:
+
+  agents:
+    - name: "PaymentGateway"
+      protocol: "MCP"
+      tools: ["payment_processor", "fraud_detector"]
+    
+    - name: "TransactionAgent"
+      protocol: "MCP"
+      tools: ["transaction_validator", "external_apis"]
+    
+    - name: "FraudAnalyzer"
+      protocol: "MCP"
+      tools: ["ml_predictor", "risk_engine"]
+    
+    - name: "PaymentCoordinator"
+      protocol: "A2A"
+      communicates_with: ["PaymentGateway", "TransactionAgent", "FraudAnalyzer"]
+
+  steps:
+    - agent: "PaymentGateway"
+      action: "process_payment_data"
+      protocol: "MCP"
+      
+    - agent: "TransactionAgent"
+      action: "validate_transaction"
+      protocol: "MCP"
+      
+    - agent: "FraudAnalyzer"
+      action: "analyze"
+      protocol: "MCP"
+      
+    - agent: "FraudAnalyzer"
+      action: "execute"
+      protocol: "MCP"
+      
+    - agent: "PaymentCoordinator"
+      action: "process_transaction"
+      protocol: "A2A" 

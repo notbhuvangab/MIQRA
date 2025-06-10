@@ -1,0 +1,44 @@
+workflow:
+  name: "Smart Inventory Management"
+  description: "AI-powered inventory optimization and demand forecasting"
+  metadata:
+    version: "1.0"
+    domain: "supply_chain"
+
+  agents:
+    - name: "DemandForecastAgent"
+      protocol: "MCP"
+      tools: ["forecasting_model", "sales_analyzer"]
+    
+    - name: "InventoryTrackerAgent"
+      protocol: "MCP"
+      tools: ["warehouse_system", "stock_monitor"]
+    
+    - name: "SupplierAgent"
+      protocol: "MCP"
+      tools: ["supplier_api", "procurement_system"]
+    
+    - name: "OptimizationAgent"
+      protocol: "A2A"
+      communicates_with: ["DemandForecastAgent", "InventoryTrackerAgent", "SupplierAgent"]
+
+  steps:
+    - agent: "DemandForecastAgent"
+      action: "analyze_sales_trends"
+      protocol: "MCP"
+      
+    - agent: "DemandForecastAgent"
+      action: "forecast_demand"
+      protocol: "MCP"
+      
+    - agent: "InventoryTrackerAgent"
+      action: "monitor_stock_levels"
+      protocol: "MCP"
+      
+    - agent: "SupplierAgent"
+      action: "check_supplier_availability"
+      protocol: "MCP"
+      
+    - agent: "OptimizationAgent"
+      action: "optimize_inventory_levels"
+      protocol: "A2A"

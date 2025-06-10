@@ -1,0 +1,66 @@
+
+workflow:
+  name: "FinancialAnalysisWorkflow"
+  protocol: "MCP"
+  version: "1.0"
+  description: "Financial risk analysis with regulatory compliance"
+  
+  agents:
+    - id: DataFetcher
+      type: FinancialDataProcessor
+      permissions: read_only
+      tools:
+        - name: MarketDataAPI
+          version: 2.1.0
+          sandbox: true
+          
+    - id: RiskAnalyzer
+      type: RiskEngine
+      permissions: user
+      tools:
+        - name: VaRCalculator
+          version: 1.5.0
+        - name: StressTestEngine
+          version: 2.0.0
+          
+    - id: ComplianceAgent
+      type: RegulatoryChecker
+      permissions: auditor
+      tools:
+        - name: SOXValidator
+          version: 1.0.0
+        - name: BaselIIIChecker
+          version: 3.0.0
+          
+  steps:
+    - step_id: "fetch_market_data"
+      agent: DataFetcher
+      action: "get_portfolio_data"
+      params:
+        portfolio_id: "PORTFOLIO_001"
+        
+    - step_id: "calculate_risk_metrics"
+      agent: RiskAnalyzer
+      action: "compute_var"
+      depends_on: ["fetch_market_data"]
+      
+    - step_id: "run_stress_tests"
+      agent: RiskAnalyzer
+      action: "stress_test_portfolio"
+      depends_on: ["calculate_risk_metrics"]
+      
+    - step_id: "validate_compliance"
+      agent: ComplianceAgent
+      action: "check_regulatory_limits"
+      depends_on: ["run_stress_tests"]
+      
+  dataflows:
+    - source: DataFetcher
+      target: RiskAnalyzer
+      encryption: tls
+      
+  security:
+    authentication: multi_factor
+    authorization: rbac
+    compliance_frameworks: ["SOX", "Basel_III", "MiFID_II"]
+    data_retention: "7_years"

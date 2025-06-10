@@ -1,0 +1,50 @@
+workflow:
+  name: "Medical Diagnosis Assistant"
+  description: "AI-powered medical diagnosis and patient data analysis"
+  metadata:
+    version: "1.0"
+    compliance: ["HIPAA", "GDPR"]
+
+  agents:
+
+  agents:
+    - name: "PatientDataAgent"
+      protocol: "MCP" 
+      tools: ["medical_database", "pii_handler"]
+    
+    - name: "DiagnosisModelAgent"
+      protocol: "MCP"
+      tools: ["medical_ml_model", "image_analyzer"]
+    
+    - name: "PrivacyAgent"
+      protocol: "MCP"
+      tools: ["data_anonymizer"]
+    
+    - name: "ClinicalCoordinator"
+      protocol: "A2A"
+      communicates_with: ["PatientDataAgent", "DiagnosisModelAgent", "PrivacyAgent"]
+
+  steps:
+    - agent: "PatientDataAgent"
+      action: "retrieve_patient_records"
+      protocol: "MCP"
+      params:
+        data_types: ["medical_history", "personal_data"]
+      
+    - agent: "DiagnosisModelAgent"
+      action: "analyze"
+      protocol: "MCP"
+      
+    - agent: "DiagnosisModelAgent"
+      action: "process"
+      protocol: "MCP"
+      
+    - agent: "PrivacyAgent"
+      action: "process"
+      protocol: "MCP"
+      params:
+        pii_handling: "anonymize"
+      
+    - agent: "ClinicalCoordinator"
+      action: "coordinate_diagnosis"
+      protocol: "A2A" 

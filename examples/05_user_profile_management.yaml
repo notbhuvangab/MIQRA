@@ -1,0 +1,31 @@
+workflow:
+  name: "User Profile Management"
+  description: "Process user profiles and preferences"
+  metadata:
+    version: "1.0"
+    compliance: ["GDPR"]
+
+  agents:
+
+  agents:
+    - name: "UserProcessor"
+      protocol: "MCP"
+      tools: ["database_connector", "user_validator"]
+    
+    - name: "ProfileManager"
+      protocol: "A2A"
+      communicates_with: ["UserProcessor"]
+
+  steps:
+    - agent: "UserProcessor"
+      action: "fetch_user_data"
+      protocol: "MCP"
+      
+    - agent: "UserProcessor"
+      action: "validate_profile"
+      protocol: "MCP"
+      
+    - agent: "ProfileManager"
+      action: "update_preferences"
+      protocol: "A2A"
+      from: "UserProcessor" 

@@ -1,0 +1,19 @@
+workflow:
+  name: "Basic Calculator"
+  description: "Simple mathematical calculations"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "Calculator"
+      protocol: "MCP"
+      tools: ["math_engine"]
+
+  steps:
+    - agent: "Calculator"
+      action: "add_numbers"
+      protocol: "MCP"
+      
+    - agent: "Calculator"
+      action: "multiply_result"
+      protocol: "MCP" 

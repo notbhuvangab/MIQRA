@@ -1,0 +1,36 @@
+
+workflow:
+  name: "BasicMCPChain"
+  protocol: "MCP"
+  version: "1.0"
+  description: "Simple MCP tool chain for document processing"
+  
+  agents:
+    - id: DocumentAgent
+      type: TextProcessor
+      permissions: user
+      tools:
+        - name: PDFParser
+          version: 1.2.0
+          sandbox: true
+    
+  steps:
+    - step_id: "fetch_document"
+      agent: DocumentAgent
+      action: "fetch_pdf"
+      params:
+        url: "https://example.com/document.pdf"
+        
+    - step_id: "parse_content"
+      agent: DocumentAgent
+      action: "extract_text"
+      depends_on: ["fetch_document"]
+      
+  dataflows:
+    - source: DocumentAgent
+      target: OutputBucket
+      encryption: tls
+      
+  security:
+    authentication: oauth2
+    authorization: rbac

@@ -1,0 +1,74 @@
+
+workflow:
+  name: "ComplexMCPMultiTool"
+  protocol: "MCP"
+  version: "2.1"
+  description: "Complex MCP workflow with multiple interconnected tools"
+  
+  agents:
+    - id: DataScraper
+      type: WebCrawler
+      permissions: root
+      tools:
+        - name: HTTPClient
+          version: 0.9.1
+          sandbox: false
+        - name: JSONParser
+          version: 2.0.0
+          
+    - id: AnalyticsAgent
+      type: DataProcessor
+      permissions: user
+      tools:
+        - name: StatisticsEngine
+          version: 1.5.0
+        - name: ReportGenerator
+          version: 0.0.1
+          
+    - id: NotificationAgent
+      type: Messenger
+      permissions: user
+      tools:
+        - name: EmailSender
+          version: 1.0.0
+          
+  steps:
+    - step_id: "scrape_data"
+      agent: DataScraper
+      action: "crawl_websites"
+      params:
+        urls: ["http://internal.company.com/api"]
+        headers:
+          api_key: "sk-1234567890abcdef"
+        
+    - step_id: "process_analysis"
+      agent: AnalyticsAgent
+      action: "analyze_data"
+      depends_on: ["scrape_data"]
+      params:
+        algorithms: ["clustering", "regression"]
+        
+    - step_id: "generate_report"
+      agent: AnalyticsAgent
+      action: "create_report"
+      depends_on: ["process_analysis"]
+      
+    - step_id: "send_notifications"
+      agent: NotificationAgent
+      action: "email_report"
+      depends_on: ["generate_report"]
+      params:
+        recipients: ["admin@company.com"]
+        
+  dataflows:
+    - source: DataScraper
+      target: AnalyticsAgent
+      encryption: none
+      
+    - source: AnalyticsAgent  
+      target: NotificationAgent
+      encryption: tls
+      
+  security:
+    authentication: api_key
+    log_level: debug

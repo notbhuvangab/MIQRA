@@ -1,0 +1,23 @@
+workflow:
+  name: "Simple Text Processing"
+  description: "Basic text file reading and formatting"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "TextReader"
+      protocol: "MCP"
+      tools: ["file_reader"]
+    
+    - name: "TextFormatter" 
+      protocol: "MCP"
+      tools: ["text_formatter"]
+
+  steps:
+    - agent: "TextReader"
+      action: "read_file"
+      protocol: "MCP"
+      
+    - agent: "TextFormatter"
+      action: "format_text"
+      protocol: "MCP" 

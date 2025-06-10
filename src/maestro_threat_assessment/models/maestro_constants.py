@@ -19,7 +19,7 @@ class MAESTROLayer(Enum):
     L6_COMPLIANCE = 6
     L7_ECOSYSTEM = 7
 
-# MAESTRO layer criticality weights (derived from CSA's 2025 threat statistics)
+# MAESTRO layer criticality weights (from Layer-Description-WeightWEI-ExposureIndexRPS.csv)
 MAESTRO_LAYER_WEIGHTS = {
     MAESTROLayer.L1_FOUNDATION_MODELS: 0.15,
     MAESTROLayer.L2_DATA_OPERATIONS: 0.10,
@@ -30,7 +30,7 @@ MAESTRO_LAYER_WEIGHTS = {
     MAESTROLayer.L7_ECOSYSTEM: 0.10
 }
 
-# MAESTRO layer exposure indices (from CSA's 2025 implementation guide)
+# MAESTRO layer exposure indices (from Layer-Description-WeightWEI-ExposureIndexRPS.csv)
 MAESTRO_EXPOSURE_INDEX = {
     MAESTROLayer.L1_FOUNDATION_MODELS: 0.30,
     MAESTROLayer.L2_DATA_OPERATIONS: 0.25,
@@ -41,16 +41,7 @@ MAESTRO_EXPOSURE_INDEX = {
     MAESTROLayer.L7_ECOSYSTEM: 0.20
 }
 
-# MAESTRO-layered cost factors matrix
-MAESTRO_COST_WEIGHTS = {
-    MAESTROLayer.L1_FOUNDATION_MODELS: 0.15,  # Model hardening, Bias mitigation
-    MAESTROLayer.L2_DATA_OPERATIONS: 0.12,   # Anonymization, Vector DB security
-    MAESTROLayer.L3_AGENT_FRAMEWORKS: 0.22,  # Protocol validation, Tool vetting
-    MAESTROLayer.L4_DEPLOYMENT: 0.18,        # Sandboxing, Zero Trust networking
-    MAESTROLayer.L5_OBSERVABILITY: 0.10,     # AI-specific monitoring tools
-    MAESTROLayer.L6_COMPLIANCE: 0.15,        # Audit trails, Policy engines
-    MAESTROLayer.L7_ECOSYSTEM: 0.08          # Third-party agent vetting
-}
+
 
 # Vulnerability to MAESTRO layer mapping
 VULNERABILITY_LAYER_MAPPING = {
@@ -120,13 +111,47 @@ MAESTRO_LAYER_DESCRIPTIONS = {
     MAESTROLayer.L7_ECOSYSTEM: "Third-party integrations, supply chain security, dependency management"
 }
 
-# Cost component descriptions
-MAESTRO_COST_COMPONENTS = {
-    MAESTROLayer.L1_FOUNDATION_MODELS: ["Model hardening", "Bias mitigation", "Prompt filtering"],
-    MAESTROLayer.L2_DATA_OPERATIONS: ["Data anonymization", "Vector DB security", "Privacy controls"],
-    MAESTROLayer.L3_AGENT_FRAMEWORKS: ["Protocol validation", "Tool vetting", "Agent sandboxing"],
-    MAESTROLayer.L4_DEPLOYMENT: ["Container security", "Zero Trust networking", "Runtime protection"],
-    MAESTROLayer.L5_OBSERVABILITY: ["AI-specific monitoring", "Security analytics", "Threat detection"],
-    MAESTROLayer.L6_COMPLIANCE: ["Audit systems", "Policy engines", "Compliance reporting"],
-    MAESTROLayer.L7_ECOSYSTEM: ["Third-party vetting", "Supply chain scanning", "Dependency analysis"]
-} 
+# Core Threat Matrix from research - specific AC, Impact, VS, PC values
+CORE_THREAT_MATRIX = {
+    # L1: Foundation Models
+    'model_extraction': {'ac': 2, 'impact': 3, 'vs': 6, 'pc': 2, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},
+    'prompt_injection': {'ac': 1, 'impact': 5, 'vs': 9, 'pc': 3, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},
+    'bias_amplification': {'ac': 1, 'impact': 5, 'vs': 9, 'pc': 3, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},  # Mapped to prompt injection
+    'model_poisoning': {'ac': 2, 'impact': 3, 'vs': 6, 'pc': 2, 'layer': MAESTROLayer.L1_FOUNDATION_MODELS},  # Mapped to model extraction
+    
+    # L2: Data Operations
+    'data_poisoning': {'ac': 2, 'impact': 4, 'vs': 7, 'pc': 3, 'layer': MAESTROLayer.L2_DATA_OPERATIONS},
+    'data_leakage': {'ac': 1, 'impact': 5, 'vs': 8, 'pc': 2, 'layer': MAESTROLayer.L2_DATA_OPERATIONS},  # Mapped to sensitive info disclosure
+    'privacy_violation': {'ac': 1, 'impact': 5, 'vs': 8, 'pc': 2, 'layer': MAESTROLayer.L2_DATA_OPERATIONS},  # Mapped to sensitive info disclosure
+    
+    # L3: Agent Frameworks  
+    'tool_poisoning': {'ac': 1, 'impact': 5, 'vs': 9, 'pc': 3, 'layer': MAESTROLayer.L3_AGENT_FRAMEWORKS},
+    'agent_impersonation': {'ac': 2, 'impact': 4, 'vs': 7, 'pc': 3, 'layer': MAESTROLayer.L3_AGENT_FRAMEWORKS},  # Mapped to unauthorized impersonation
+    'protocol_manipulation': {'ac': 1, 'impact': 5, 'vs': 9, 'pc': 3, 'layer': MAESTROLayer.L3_AGENT_FRAMEWORKS},  # Mapped to message injection
+    
+    # L4: Deployment
+    'server_compromise': {'ac': 3, 'impact': 5, 'vs': 8, 'pc': 2, 'layer': MAESTROLayer.L4_DEPLOYMENT},
+    'sandbox_escape': {'ac': 3, 'impact': 5, 'vs': 8, 'pc': 2, 'layer': MAESTROLayer.L4_DEPLOYMENT},  # Mapped to server compromise
+    'privilege_escalation': {'ac': 3, 'impact': 5, 'vs': 8, 'pc': 2, 'layer': MAESTROLayer.L4_DEPLOYMENT},  # Mapped to server compromise
+    'network_exposure': {'ac': 1, 'impact': 3, 'vs': 5, 'pc': 2, 'layer': MAESTROLayer.L4_DEPLOYMENT},  # Mapped to resource exhaustion
+    
+    # L5: Observability
+    'monitoring_evasion': {'ac': 3, 'impact': 4, 'vs': 6, 'pc': 1, 'layer': MAESTROLayer.L5_OBSERVABILITY},  # Mapped to log manipulation
+    'log_tampering': {'ac': 3, 'impact': 4, 'vs': 6, 'pc': 1, 'layer': MAESTROLayer.L5_OBSERVABILITY},  # Mapped to log manipulation
+    'audit_trail_manipulation': {'ac': 3, 'impact': 4, 'vs': 6, 'pc': 1, 'layer': MAESTROLayer.L5_OBSERVABILITY},  # Mapped to log manipulation
+    
+    # L6: Compliance
+    'compliance_violation': {'ac': 1, 'impact': 5, 'vs': 8, 'pc': 2, 'layer': MAESTROLayer.L6_COMPLIANCE},  # Mapped to PII mishandling
+    'regulatory_breach': {'ac': 1, 'impact': 5, 'vs': 8, 'pc': 2, 'layer': MAESTROLayer.L6_COMPLIANCE},  # Mapped to PII mishandling
+    'policy_bypass': {'ac': 1, 'impact': 5, 'vs': 9, 'pc': 3, 'layer': MAESTROLayer.L6_COMPLIANCE},  # Mapped to credential theft
+    
+    # L7: Ecosystem
+    'supply_chain_attack': {'ac': 2, 'impact': 5, 'vs': 8, 'pc': 3, 'layer': MAESTROLayer.L7_ECOSYSTEM},  # Mapped to malicious server spoofing
+    'third_party_compromise': {'ac': 3, 'impact': 5, 'vs': 7, 'pc': 3, 'layer': MAESTROLayer.L7_ECOSYSTEM},  # Mapped to agent trust exploitation
+    'dependency_vulnerability': {'ac': 2, 'impact': 5, 'vs': 8, 'pc': 3, 'layer': MAESTROLayer.L7_ECOSYSTEM},  # Mapped to malicious server spoofing
+}
+
+# Fallback values for unknown threats (conservative estimates)
+DEFAULT_THREAT_VALUES = {'ac': 2, 'impact': 3, 'vs': 5, 'pc': 2}
+
+ 

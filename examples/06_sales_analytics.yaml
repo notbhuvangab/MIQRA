@@ -1,0 +1,35 @@
+workflow:
+  name: "Sales Analytics Dashboard"
+  description: "Analyze sales data and generate reports"
+  metadata:
+    version: "1.0"
+
+  agents:
+    - name: "DataExtractor"
+      protocol: "MCP"
+      tools: ["database_connector"]
+    
+    - name: "AnalyticsAgent"
+      protocol: "MCP"
+      tools: ["ml_predictor", "report_generator"]
+    
+    - name: "ReportCoordinator"
+      protocol: "A2A"
+      communicates_with: ["DataExtractor", "AnalyticsAgent"]
+
+  steps:
+    - agent: "DataExtractor"
+      action: "fetch_sales_data"
+      protocol: "MCP"
+      
+    - agent: "AnalyticsAgent"
+      action: "analyze"
+      protocol: "MCP"
+      
+    - agent: "AnalyticsAgent"
+      action: "generate_predictions"
+      protocol: "MCP"
+      
+    - agent: "ReportCoordinator"
+      action: "compile_report"
+      protocol: "A2A" 

@@ -1,0 +1,46 @@
+
+workflow:
+  name: "SimpleA2ANetwork"
+  protocol: "A2A"
+  version: "1.0"
+  description: "Simple agent-to-agent communication network"
+  
+  agents:
+    - id: CoordinatorAgent
+      type: Orchestrator
+      permissions: admin
+      capabilities: ["coordinate", "monitor"]
+      
+    - id: WorkerAgent1
+      type: TaskExecutor
+      permissions: user
+      capabilities: ["process", "compute"]
+      
+    - id: WorkerAgent2
+      type: TaskExecutor
+      permissions: user
+      capabilities: ["validate", "store"]
+      
+  communication:
+    protocol: "a2a_messaging"
+    encryption: "end_to_end"
+    authentication: "mutual_tls"
+    
+  steps:
+    - step_id: "coordinate_task"
+      agent: CoordinatorAgent
+      action: "distribute_work"
+      
+    - step_id: "process_task_1"
+      agent: WorkerAgent1
+      action: "execute_computation"
+      depends_on: ["coordinate_task"]
+      
+    - step_id: "validate_results"
+      agent: WorkerAgent2
+      action: "verify_output"
+      depends_on: ["process_task_1"]
+      
+  security:
+    trust_model: "certificate_authority"
+    audit_logging: true
